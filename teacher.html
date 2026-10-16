@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher - CampusAttend</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>body{font-family:\'Poppins\',sans-serif}</style>
+</head>
+<body class="bg-gray-100 flex justify-center">
+<div class="w-full max-w-[430px] bg-[#F8F9FF] min-h-screen shadow-xl relative pb-20">
+    <div class="bg-gradient-to-br from-emerald-600 to-teal-600 p-6 pb-10 rounded-b-[30px] text-white">
+        <div class="flex justify-between items-center"><div class="flex gap-3 items-center"><img src="https://i.pravatar.cc/100?img=15" class="w-12 h-12 rounded-full border-2 border-white"><div><h2 class="font-bold">Prof. Anjali Sharma</h2><p class="text-xs text-emerald-100">CSE Department</p></div></div><button onclick="logout()" class="w-9 h-9 bg-white/20 rounded-full"><i class="fa-solid fa-right-from-bracket"></i></button></div>
+    </div>
+
+    <div class="px-5 -mt-6">
+        <!-- Live Code Card -->
+        <div class="bg-white rounded-2xl p-5 shadow-lg border text-center">
+            <p class="text-sm font-semibold">Live Attendance Code</p><p class="text-xs text-gray-500">Share with students - Auto rotates in 30s</p>
+            <div class="bg-gray-900 text-white text-4xl font-bold tracking-[0.3em] py-4 rounded-2xl my-4" id="code">584 921</div>
+            <div class="flex gap-3"><button onclick="genCode()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-medium"><i class="fa-solid fa-rotate mr-1"></i> Rotate Code</button><button class="flex-1 bg-red-500 text-white py-2.5 rounded-xl text-sm font-medium">Close Session</button></div>
+            <p class="text-xs text-emerald-600 mt-3"><i class="fa-solid fa-circle text-[8px]"></i> Session Active - B.Tech CSE 3rd Year (42 Students)</p>
+        </div>
+
+        <!-- Today\'s Classes -->
+        <div class="bg-white rounded-2xl p-4 mt-5 border">
+            <h3 class="font-semibold mb-3">Today\'s Classes</h3>
+            <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-xl flex justify-between items-center mb-2"><div><p class="text-sm font-semibold">Data Structures - CSE-A</p><p class="text-xs text-gray-500">10:00 - 11:00 • Room 301</p></div><span class="bg-emerald-500 text-white text-xs px-2 py-1 rounded-full">LIVE</span></div>
+            <div class="bg-gray-50 p-3 rounded-xl flex justify-between items-center mb-2"><div><p class="text-sm font-semibold">Algorithms - CSE-B</p><p class="text-xs text-gray-500">12:00 - 01:00 • Room 205</p></div><span class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">Upcoming</span></div>
+            <div class="bg-gray-50 p-3 rounded-xl flex justify-between items-center"><div><p class="text-sm font-semibold">DBMS Lab - CSE-A</p><p class="text-xs text-gray-500">02:00 - 04:00 • Lab 1</p></div><span class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">Upcoming</span></div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-3 mt-5 text-center">
+            <div class="bg-white p-3 rounded-2xl border"><h2 class="text-xl font-bold text-emerald-600">28</h2><p class="text-xs text-gray-500">Present</p></div>
+            <div class="bg-white p-3 rounded-2xl border"><h2 class="text-xl font-bold text-red-500">6</h2><p class="text-xs text-gray-500">Absent</p></div>
+            <div class="bg-white p-3 rounded-2xl border"><h2 class="text-xl font-bold text-orange-500">8</h2><p class="text-xs text-gray-500">Late</p></div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-0 w-full max-w-[430px] bg-white border-t flex justify-around py-2">
+        <button class="flex flex-col items-center text-emerald-600"><i class="fa-solid fa-house"></i><span class="text-[11px]">Home</span></button>
+        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-qrcode"></i><span class="text-[11px]">Attendance</span></button>
+        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-users"></i><span class="text-[11px]">Students</span></button>
+        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-user"></i><span class="text-[11px]">Profile</span></button>
+    </div>
+</div>
+<script>
+if(localStorage.getItem(\'role\')!==\'teacher\')location.href=\'index.html\';
+function genCode(){document.getElementById(\'code\').innerText=Math.floor(100000+Math.random()*900000).toString().replace(/(.{3})/,\'$1 \')}
+setInterval(genCode,30000); function logout(){localStorage.clear();location.href=\'index.html\'}
+</script>
+</body>
+</html>

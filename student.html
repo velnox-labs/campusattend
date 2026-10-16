@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student - CampusAttend</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>body{font-family:\'Poppins\',sans-serif}</style>
+</head>
+<body class="bg-gray-100 flex justify-center">
+<div class="w-full max-w-[430px] bg-[#F8F9FF] min-h-screen shadow-xl relative pb-20">
+    <div class="bg-white p-5 flex justify-between items-center border-b">
+        <div class="flex gap-3 items-center"><img src="https://i.pravatar.cc/100?img=8" class="w-12 h-12 rounded-full"><div><h2 class="font-bold">Aman Kumar</h2><p class="text-xs text-gray-500">B.Tech CSE • 3rd Year • Roll: 21CS42</p></div></div>
+        <button onclick="logout()" class="w-9 h-9 bg-red-50 text-red-500 rounded-full"><i class="fa-solid fa-right-from-bracket"></i></button>
+    </div>
+
+    <div class="p-5">
+        <!-- Attendance Overview -->
+        <div class="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl p-5 text-white flex justify-between items-center">
+            <div><p class="text-sm opacity-80">Overall Attendance</p><h1 class="text-4xl font-bold">82%</h1><p class="text-xs opacity-80">42 Present / 51 Classes</p></div>
+            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center border-4 border-white"><span class="font-bold text-xl">82%</span></div>
+        </div>
+        <div class="bg-orange-50 border border-orange-200 text-orange-700 text-xs p-3 rounded-xl mt-3"><i class="fa-solid fa-triangle-exclamation mr-1"></i> DBMS me attendance 68% hai - 75% se kam hai!</div>
+
+        <!-- Mark Attendance -->
+        <div class="bg-white rounded-2xl p-5 mt-5 border shadow-sm">
+            <h3 class="font-semibold"><i class="fa-solid fa-qrcode text-indigo-600 mr-2"></i>Mark Attendance</h3><p class="text-xs text-gray-500 mb-3">Teacher se live code lekar enter karo</p>
+            <input id="attCode" placeholder="Enter 6-digit code" maxlength="6" class="w-full text-center text-2xl tracking-[0.4em] font-bold py-3 border-2 border-dashed rounded-xl outline-none focus:border-indigo-500">
+            <button onclick="mark()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold mt-3">Submit Attendance</button>
+            <p id="msg" class="text-center text-sm mt-2 hidden"></p>
+        </div>
+
+        <!-- Subject Wise -->
+        <h3 class="font-semibold mt-5 mb-3">Subject-wise Attendance</h3>
+        <div class="space-y-3">
+            <div class="bg-white p-4 rounded-2xl border flex justify-between items-center"><div><p class="text-sm font-semibold">Data Structures</p><p class="text-xs text-gray-500">18/20 Present</p><div class="w-32 h-1.5 bg-gray-100 rounded-full mt-1"><div class="h-1.5 bg-emerald-500 rounded-full" style="width:90%"></div></div></div><span class="text-emerald-600 font-bold">90%</span></div>
+            <div class="bg-white p-4 rounded-2xl border flex justify-between items-center"><div><p class="text-sm font-semibold">DBMS</p><p class="text-xs text-gray-500">13/19 Present</p><div class="w-32 h-1.5 bg-gray-100 rounded-full mt-1"><div class="h-1.5 bg-red-500 rounded-full" style="width:68%"></div></div></div><span class="text-red-500 font-bold">68%</span></div>
+            <div class="bg-white p-4 rounded-2xl border flex justify-between items-center"><div><p class="text-sm font-semibold">Operating System</p><p class="text-xs text-gray-500">11/12 Present</p><div class="w-32 h-1.5 bg-gray-100 rounded-full mt-1"><div class="h-1.5 bg-emerald-500 rounded-full" style="width:92%"></div></div></div><span class="text-emerald-600 font-bold">92%</span></div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-0 w-full max-w-[430px] bg-white border-t flex justify-around py-2">
+        <button class="flex flex-col items-center text-indigo-600"><i class="fa-solid fa-house"></i><span class="text-[11px]">Home</span></button>
+        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-calendar-check"></i><span class="text-[11px]">History</span></button>
+        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-bell"></i><span class="text-[11px]">Alerts</span></button>
+        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-user"></i><span class="text-[11px]">Profile</span></button>
+    </div>
+</div>
+<script>
+if(localStorage.getItem(\'role\')!==\'student\')location.href=\'index.html\';
+function mark(){
+    let c=document.getElementById(\'attCode\').value; let m=document.getElementById(\'msg\');
+    m.classList.remove(\'hidden\');
+    if(c.length===6){m.innerText=\'✅ Attendance Marked Successfully!\'; m.className=\'text-center text-sm mt-2 text-emerald-600 font-medium\';}
+    else{m.innerText=\'❌ Invalid Code! Teacher se sahi code lo.\'; m.className=\'text-center text-sm mt-2 text-red-500 font-medium\';}
+}
+function logout(){localStorage.clear();location.href=\'index.html\'}
+</script>
+</body>
+</html>

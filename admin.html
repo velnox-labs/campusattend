@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - CampusAttend</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>body{font-family:\'Poppins\',sans-serif}.nav-active{color:#4F46E5 !important}</style>
+</head>
+<body class="bg-gray-100 flex justify-center">
+<div class="w-full max-w-[430px] bg-[#F8F9FF] min-h-screen shadow-xl relative pb-20">
+    <!-- Header -->
+    <div class="bg-white p-5 flex justify-between items-center sticky top-0 z-10 border-b">
+        <div class="flex gap-3 items-center"><div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white"><i class="fa-solid fa-shield-halved"></i></div><div><h2 class="font-bold leading-none">Admin Panel</h2><p class="text-xs text-gray-500">CampusAttend</p></div></div>
+        <button onclick="logout()" class="w-9 h-9 bg-red-50 text-red-500 rounded-full"><i class="fa-solid fa-right-from-bracket"></i></button>
+    </div>
+
+    <div class="p-5">
+        <h1 class="font-bold text-lg">Dashboard</h1><p class="text-sm text-gray-500">Welcome, Admin!</p>
+        <!-- Stats -->
+        <div class="grid grid-cols-2 gap-4 mt-5">
+            <div class="bg-gradient-to-br from-indigo-600 to-indigo-500 text-white p-4 rounded-2xl"><p class="text-xs opacity-80">Total Students</p><h2 class="text-2xl font-bold">486</h2><p class="text-xs opacity-80 mt-1"><i class="fa-solid fa-arrow-trend-up"></i> +12% this month</p></div>
+            <div class="bg-white p-4 rounded-2xl border"><p class="text-xs text-gray-500">Total Teachers</p><h2 class="text-2xl font-bold">24</h2><p class="text-xs text-emerald-600 mt-1">All Active</p></div>
+            <div class="bg-white p-4 rounded-2xl border"><p class="text-xs text-gray-500">Pending Approvals</p><h2 class="text-2xl font-bold text-orange-500">8</h2><p class="text-xs text-gray-400">Needs Action</p></div>
+            <div class="bg-white p-4 rounded-2xl border"><p class="text-xs text-gray-500">Today\'s Classes</p><h2 class="text-2xl font-bold">32</h2><p class="text-xs text-gray-400">Across 6 branches</p></div>
+        </div>
+        <!-- Approvals -->
+        <div class="bg-white rounded-2xl p-4 mt-5 border">
+            <div class="flex justify-between items-center mb-3"><h3 class="font-semibold">Pending Approvals</h3><span class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full">8 New</span></div>
+            <div class="flex gap-3 items-center p-3 bg-gray-50 rounded-xl mb-2"><img src="https://i.pravatar.cc/100?img=11" class="w-10 h-10 rounded-full"><div class="flex-1"><p class="text-sm font-semibold">Rahul Verma</p><p class="text-xs text-gray-500">B.Tech CSE - Roll: 21CS101</p></div><button class="bg-emerald-500 text-white px-3 py-1 rounded-full text-xs">Approve</button></div>
+            <div class="flex gap-3 items-center p-3 bg-gray-50 rounded-xl"><img src="https://i.pravatar.cc/100?img=32" class="w-10 h-10 rounded-full"><div class="flex-1"><p class="text-sm font-semibold">Priya Singh</p><p class="text-xs text-gray-500">Professor - ECE Dept</p></div><button class="bg-emerald-500 text-white px-3 py-1 rounded-full text-xs">Approve</button></div>
+        </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="fixed bottom-0 w-full max-w-[430px] bg-white border-t flex justify-around py-2">
+        <button class="nav-active flex flex-col items-center text-indigo-600"><i class="fa-solid fa-house"></i><span class="text-[11px]">Home</span></button>
+        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-users"></i><span class="text-[11px]">Users</span></button>
+        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-chart-simple"></i><span class="text-[11px]">Reports</span></button>
+        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-gear"></i><span class="text-[11px]">Settings</span></button>
+    </div>
+</div>
+<script>if(localStorage.getItem(\'role\')!==\'admin\')location.href=\'index.html\';function logout(){localStorage.clear();location.href=\'index.html\'}</script>
+</body>
+</html>
