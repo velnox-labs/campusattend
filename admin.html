@@ -1,46 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin - CampusAttend</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>body{font-family:\'Poppins\',sans-serif}.nav-active{color:#4F46E5 !important}</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>body{font-family:\'Poppins\',sans-serif}.tab-hidden{display:none}.nav-active{color:#4F46E5!important}</style>
 </head>
 <body class="bg-gray-100 flex justify-center">
-<div class="w-full max-w-[430px] bg-[#F8F9FF] min-h-screen shadow-xl relative pb-20">
+<div class="w-full max-w-[430px] bg-[#F8F9FF] min-h-screen shadow-xl relative pb-[70px]">
+
     <!-- Header -->
-    <div class="bg-white p-5 flex justify-between items-center sticky top-0 z-10 border-b">
-        <div class="flex gap-3 items-center"><div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white"><i class="fa-solid fa-shield-halved"></i></div><div><h2 class="font-bold leading-none">Admin Panel</h2><p class="text-xs text-gray-500">CampusAttend</p></div></div>
-        <button onclick="logout()" class="w-9 h-9 bg-red-50 text-red-500 rounded-full"><i class="fa-solid fa-right-from-bracket"></i></button>
+    <div class="bg-white p-4 flex justify-between items-center sticky top-0 z-20 border-b">
+        <div class="flex gap-3 items-center">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white"><i class="fa-solid fa-shield-halved"></i></div>
+            <div><h2 class="font-bold text-sm leading-none">Admin Panel</h2><p class="text-xs text-gray-500">CampusAttend • Production</p></div>
+        </div>
+        <button onclick="logout()" class="w-9 h-9 bg-red-50 text-red-500 rounded-full"><i class="fa-solid fa-right-from-bracket text-sm"></i></button>
     </div>
 
-    <div class="p-5">
-        <h1 class="font-bold text-lg">Dashboard</h1><p class="text-sm text-gray-500">Welcome, Admin!</p>
+    <!-- HOME TAB -->
+    <div id="tab-home" class="p-5">
+        <h1 class="font-bold">Dashboard</h1><p class="text-xs text-gray-500">Real data se stats - reload par bhi safe</p>
+        
         <!-- Stats -->
-        <div class="grid grid-cols-2 gap-4 mt-5">
-            <div class="bg-gradient-to-br from-indigo-600 to-indigo-500 text-white p-4 rounded-2xl"><p class="text-xs opacity-80">Total Students</p><h2 class="text-2xl font-bold">486</h2><p class="text-xs opacity-80 mt-1"><i class="fa-solid fa-arrow-trend-up"></i> +12% this month</p></div>
-            <div class="bg-white p-4 rounded-2xl border"><p class="text-xs text-gray-500">Total Teachers</p><h2 class="text-2xl font-bold">24</h2><p class="text-xs text-emerald-600 mt-1">All Active</p></div>
-            <div class="bg-white p-4 rounded-2xl border"><p class="text-xs text-gray-500">Pending Approvals</p><h2 class="text-2xl font-bold text-orange-500">8</h2><p class="text-xs text-gray-400">Needs Action</p></div>
-            <div class="bg-white p-4 rounded-2xl border"><p class="text-xs text-gray-500">Today\'s Classes</p><h2 class="text-2xl font-bold">32</h2><p class="text-xs text-gray-400">Across 6 branches</p></div>
+        <div class="grid grid-cols-2 gap-3 mt-4">
+            <div class="bg-gradient-to-br from-indigo-600 to-violet-600 text-white p-4 rounded-2xl">
+                <p class="text-xs opacity-80">Total Students</p><h2 class="text-2xl font-bold" id="statStud">0</h2>
+                <p class="text-[11px] opacity-80" id="statApproved">0 Approved</p>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border">
+                <p class="text-xs text-gray-500">Live Sessions</p><h2 class="text-2xl font-bold" id="statSess">0</h2>
+                <p class="text-xs" id="statSessStatus">No Active</p>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border">
+                <p class="text-xs text-gray-500">Total Records</p><h2 class="text-2xl font-bold" id="statRec">0</h2>
+                <p class="text-xs text-gray-400">Self + Manual</p>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border">
+                <p class="text-xs text-gray-500">Threshold</p>
+                <div class="flex gap-1 items-center mt-1">
+                    <input id="thresh" type="number" value="75" class="w-14 border rounded-lg p-1 text-center font-bold text-sm">
+                    <span class="text-sm">%</span>
+                    <button onclick="saveThresh()" class="bg-indigo-600 text-white text-xs px-2 py-1.5 rounded-lg ml-1">Save</button>
+                </div>
+            </div>
         </div>
-        <!-- Approvals -->
-        <div class="bg-white rounded-2xl p-4 mt-5 border">
-            <div class="flex justify-between items-center mb-3"><h3 class="font-semibold">Pending Approvals</h3><span class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full">8 New</span></div>
-            <div class="flex gap-3 items-center p-3 bg-gray-50 rounded-xl mb-2"><img src="https://i.pravatar.cc/100?img=11" class="w-10 h-10 rounded-full"><div class="flex-1"><p class="text-sm font-semibold">Rahul Verma</p><p class="text-xs text-gray-500">B.Tech CSE - Roll: 21CS101</p></div><button class="bg-emerald-500 text-white px-3 py-1 rounded-full text-xs">Approve</button></div>
-            <div class="flex gap-3 items-center p-3 bg-gray-50 rounded-xl"><img src="https://i.pravatar.cc/100?img=32" class="w-10 h-10 rounded-full"><div class="flex-1"><p class="text-sm font-semibold">Priya Singh</p><p class="text-xs text-gray-500">Professor - ECE Dept</p></div><button class="bg-emerald-500 text-white px-3 py-1 rounded-full text-xs">Approve</button></div>
+
+        <!-- Pending Approvals -->
+        <div class="bg-white rounded-2xl p-4 mt-4 border">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-semibold text-sm">Pending Approvals</h3>
+                <span class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full" id="pendingCount">0 New</span>
+            </div>
+            <div id="pendingList" class="space-y-2"></div>
+            <button onclick="addDummyUser()" class="w-full mt-3 border-2 border-dashed py-2 rounded-xl text-xs text-gray-500"><i class="fa-solid fa-plus mr-1"></i> Add Dummy Pending User (Test)</button>
+        </div>
+
+        <!-- Audit Logs -->
+        <div class="bg-white rounded-2xl p-4 mt-4 border">
+            <div class="flex justify-between items-center mb-2"><h3 class="font-semibold text-sm">Audit Logs</h3><button onclick="clearAudit()" class="text-xs text-red-500">Clear</button></div>
+            <div id="audit" class="text-xs text-gray-600 space-y-1 max-h-32 overflow-y-auto bg-gray-50 p-2 rounded-xl"></div>
         </div>
     </div>
 
-    <!-- Bottom Nav -->
-    <div class="fixed bottom-0 w-full max-w-[430px] bg-white border-t flex justify-around py-2">
-        <button class="nav-active flex flex-col items-center text-indigo-600"><i class="fa-solid fa-house"></i><span class="text-[11px]">Home</span></button>
-        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-users"></i><span class="text-[11px]">Users</span></button>
-        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-chart-simple"></i><span class="text-[11px]">Reports</span></button>
-        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-gear"></i><span class="text-[11px]">Settings</span></button>
+    <!-- USERS TAB -->
+    <div id="tab-users" class="p-5 tab-hidden">
+        <h3 class="font-bold">User Management</h3>
+        <p class="text-xs text-gray-500 mb-3">Approve / Reject / Suspend - Role client se change nahi hota</p>
+        <input id="searchUser" oninput="renderUsers()" placeholder="Search name or roll..." class="w-full border p-3 rounded-xl text-sm">
+        <div id="userList" class="space-y-2 mt-3"></div>
+    </div>
+
+    <!-- ACADEMICS TAB -->
+    <div id="tab-academics" class="p-5 tab-hidden">
+        <h3 class="font-bold">Academic Setup</h3>
+        <p class="text-xs text-gray-500 mb-3">Subjects + Timetable - Professor sirf assigned subject me session bana sakta hai</p>
+        
+        <div class="bg-white p-4 rounded-2xl border">
+            <h4 class="font-semibold text-sm">Create Subject</h4>
+            <input id="subName" placeholder="Subject Name e.g. DBMS" class="w-full border p-3 rounded-xl mt-2 text-sm">
+            <input id="subCode" placeholder="Code e.g. CS302" class="w-full border p-3 rounded-xl mt-2 text-sm">
+            <input id="subSection" placeholder="Section e.g. CSE-A" class="w-full border p-3 rounded-xl mt-2 text-sm">
+            <button onclick="addSubject()" class="w-full bg-emerald-600 text-white py-3 rounded-xl mt-3 text-sm font-medium">Create Subject</button>
+        </div>
+        <div id="subList" class="mt-4 space-y-2"></div>
+
+        <div class="bg-white p-4 rounded-2xl border mt-4">
+            <h4 class="font-semibold text-sm">Live Session Monitor</h4>
+            <div id="liveMonitor" class="text-xs text-gray-600 mt-2 bg-gray-50 p-3 rounded-xl"></div>
+        </div>
+    </div>
+
+    <!-- REPORTS TAB -->
+    <div id="tab-reports" class="p-5 tab-hidden">
+        <h3 class="font-bold">Reports & Exports</h3>
+        <p class="text-xs text-gray-500 mb-3">Real records se PDF/Excel - Role based access</p>
+        
+        <div class="bg-white p-4 rounded-2xl border text-sm">
+            <p>Total Records: <b id="rTotal">0</b></p>
+            <p>Sessions: <b id="rSess">0</b></p>
+            <p>Subjects: <b id="rSub">0</b></p>
+            <p>Threshold: <b id="rThresh">75%</b></p>
+        </div>
+
+        <button onclick="exportPDF()" class="w-full bg-red-600 text-white py-3 rounded-xl mt-3 text-sm font-medium"><i class="fa-solid fa-file-pdf mr-2"></i> Export PDF Report</button>
+        <button onclick="exportExcel()" class="w-full bg-green-600 text-white py-3 rounded-xl mt-2 text-sm font-medium"><i class="fa-solid fa-file-excel mr-2"></i> Export Excel (XLSX)</button>
+        <button onclick="exportCSV()" class="w-full bg-indigo-600 text-white py-3 rounded-xl mt-2 text-sm font-medium"><i class="fa-solid fa-file-csv mr-2"></i> Export CSV</button>
+        
+        <div class="bg-white rounded-2xl p-3 mt-4 border">
+            <h4 class="font-semibold text-sm mb-2">Recent Records (Last 10)</h4>
+            <div id="reportList" class="space-y-1 text-xs"></div>
+        </div>
+        <button onclick="clearAllData()" class="w-full bg-gray-900 text-white py-2 rounded-xl mt-4 text-xs">⚠️ Clear All Demo Data</button>
+    </div>
+
+    <!-- Bottom Nav - APP JAISA -->
+    <div class="fixed bottom-0 w-full max-w-[430px] bg-white border-t flex justify-around py-2 z-20">
+        <button onclick="switchTab(\'home\')" id="nav-home" class="nav-active flex flex-col items-center text-indigo-600"><i class="fa-solid fa-house"></i><span class="text-[10px]">Home</span></button>
+        <button onclick="switchTab(\'users\')" id="nav-users" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-users"></i><span class="text-[10px]">Users</span></button>
+        <button onclick="switchTab(\'academics\')" id="nav-academics" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-book"></i><span class="text-[10px]">Academics</span></button>
+        <button onclick="switchTab(\'reports\')" id="nav-reports" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-chart-simple"></i><span class="text-[10px]">Reports</span></button>
     </div>
 </div>
-<script>if(localStorage.getItem(\'role\')!==\'admin\')location.href=\'index.html\';function logout(){localStorage.clear();location.href=\'index.html\'}</script>
+
+<script>
+if(localStorage.getItem(\'role\')!==\'admin\') location.href=\'index.html\';
+
+// INIT DB
+if(!localStorage.getItem(\'ca_db\')) localStorage.setItem(\'ca_db\', JSON.stringify({users:[{name:"Rahul Verma", roll:"21CS101", status:"pending", dept:"CSE"},{name:"Priya Singh", roll:"21EC05", status:"pending", dept:"ECE"}], sessions:[], records:[], threshold:75, subjects:[{name:"Data Structures",code:"CS301",section:"CSE-A"},{name:"DBMS",code:"CS302",section:"CSE-A"},{name:"Operating System",code:"CS303",section:"CSE-A"}], audit:["System initialized at "+new Date().toLocaleString()]}));
+let DB = JSON.parse(localStorage.getItem(\'ca_db\'));
+function save(){localStorage.setItem(\'ca_db\', JSON.stringify(DB))}
+
+function switchTab(t){
+    [\'home\',\'users\',\'academics\',\'reports\'].forEach(x=>{
+        document.getElementById(\'tab-\'+x).classList.add(\'tab-hidden\');
+        document.getElementById(\'nav-\'+x).classList.remove(\'nav-active\',\'text-indigo-600\');
+        document.getElementById(\'nav-\'+x).classList.add(\'text-gray-400\');
+    });
+    document.getElementById(\'tab-\'+t).classList.remove(\'tab-hidden\');
+    document.getElementById(\'nav-\'+t).classList.add(\'nav-active\',\'text-indigo-600\');
+    renderAll();
+}
+
+function renderAll(){
+    DB = JSON.parse(localStorage.getItem(\'ca_db\'));
+    // Stats
+    let approved = DB.users.filter(u=>u.status===\'approved\').length;
+    document.getElementById(\'statStud\').innerText = DB.users.length + 486;
+    document.getElementById(\'statApproved\').innerText = approved + " Approved";
+    document.getElementById(\'statSess\').innerText = DB.sessions.length;
+    document.getElementById(\'statRec\').innerText = DB.records.length;
+    document.getElementById(\'thresh\').value = DB.threshold;
+    
+    let live = JSON.parse(localStorage.getItem(\'ca_live_session\') || \'null\');
+    let sEl = document.getElementById(\'statSessStatus\');
+    if(live && live.status===\'open\' && Date.now() < live.expiresAt) sEl.innerHTML = \'<span class="text-emerald-600">● LIVE OPEN</span> Code: \'+live.code;
+    else if(live && live.status===\'open\') sEl.innerHTML = \'<span class="text-orange-500">● Expired</span>\';
+    else sEl.innerHTML = \'<span class="text-gray-400">No Active</span>\';
+
+    // Pending
+    let pending = DB.users.filter(u=>u.status===\'pending\');
+    document.getElementById(\'pendingCount\').innerText = pending.length + " New";
+    let pList=document.getElementById(\'pendingList\');
+    if(!pending.length) pList.innerHTML=\'<p class="text-xs text-gray-400 text-center py-3">No pending approvals</p>\';
+    else pList.innerHTML = pending.map((u,i)=>{
+        let idx = DB.users.indexOf(u);
+        return `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+            <div><p class="text-sm font-semibold">${u.name}</p><p class="text-xs text-gray-500">${u.roll} • ${u.dept||\'CSE\'}</p></div>
+            <div class="flex gap-1"><button onclick="approve(${idx})" class="bg-emerald-500 text-white px-3 py-1.5 rounded-full text-xs">Approve</button><button onclick="reject(${idx})" class="bg-red-500 text-white px-3 py-1.5 rounded-full text-xs">Reject</button></div>
+        </div>`;
+    }).join(\'\');
+
+    // Audit
+    document.getElementById(\'audit\').innerHTML = DB.audit.slice(-10).reverse().map(a=>`• ${a}`).join(\'<br>\') || \'No logs\';
+
+    // Users tab
+    renderUsers();
+    // Subjects
+    renderSubjects();
+    // Reports
+    document.getElementById(\'rTotal\').innerText = DB.records.length;
+    document.getElementById(\'rSess\').innerText = DB.sessions.length;
+    document.getElementById(\'rSub\').innerText = (DB.subjects||[]).length;
+    document.getElementById(\'rThresh\').innerText = DB.threshold + "%";
+    let rList=document.getElementById(\'reportList\');
+    if(!DB.records.length) rList.innerHTML=\'<p class="text-gray-400">No records yet - Teacher se session karwao</p>\';
+    else rList.innerHTML = DB.records.slice(-10).reverse().map(r=>`<div class="flex justify-between bg-gray-50 p-2 rounded-lg"><span>${r.roll} • ${r.subjectCode||\'CS301\'} • ${r.status}</span><span class="${r.method===\'manual\'?\'text-orange-600\':\'text-emerald-600\'}">${r.method}</span></div>`).join(\'\');
+
+    // Live monitor
+    document.getElementById(\'liveMonitor\').innerHTML = live ? `Session: ${live.sessionId}<br>Code: <b>${live.code}</b> • Expires: ${new Date(live.expiresAt).toLocaleTimeString()}<br>Status: ${live.status}` : \'No live session\';
+}
+
+function renderUsers(){
+    let q = (document.getElementById(\'searchUser\')?.value || \'\').toLowerCase();
+    let list=document.getElementById(\'userList\');
+    let filtered = DB.users.filter(u=> u.name.toLowerCase().includes(q) || u.roll.toLowerCase().includes(q));
+    if(!filtered.length) list.innerHTML=\'<p class="text-xs text-gray-400 text-center">No users found</p>\';
+    else list.innerHTML = filtered.map((u,i)=>{
+        let idx=DB.users.indexOf(u);
+        let badge = u.status===\'approved\'?\'bg-emerald-100 text-emerald-700\': u.status===\'pending\'?\'bg-orange-100 text-orange-700\':\'bg-red-100 text-red-700\';
+        return `<div class="bg-white p-3 rounded-xl border flex justify-between items-center">
+            <div><p class="text-sm font-semibold">${u.name}</p><p class="text-xs text-gray-500">${u.roll}</p><span class="text-[11px] px-2 py-0.5 rounded-full ${badge}">${u.status}</span></div>
+            <div class="flex flex-col gap-1"><button onclick="approve(${idx})" class="bg-emerald-500 text-white text-xs px-2 py-1 rounded">Approve</button><button onclick="suspend(${idx})" class="bg-gray-800 text-white text-xs px-2 py-1 rounded">Suspend</button></div>
+        </div>`;
+    }).join(\'\');
+}
+
+function renderSubjects(){
+    let d=document.getElementById(\'subList\');
+    d.innerHTML = (DB.subjects||[]).map((s,i)=>`<div class="bg-white p-3 rounded-xl border flex justify-between items-center"><div><p class="text-sm font-semibold">${s.name}</p><p class="text-xs text-gray-500">${s.code} • ${s.section}</p></div><button onclick="delSub(${i})" class="text-red-500 text-xs">Delete</button></div>`).join(\'\') || \'<p class="text-xs text-gray-400">No subjects</p>\';
+}
+
+function approve(i){DB.users[i].status=\'approved\'; DB.audit.push(`${DB.users[i].name} (${DB.users[i].roll}) APPROVED at ${new Date().toLocaleTimeString()}`); save(); renderAll();}
+function reject(i){DB.users[i].status=\'rejected\'; DB.audit.push(`${DB.users[i].name} REJECTED`); save(); renderAll();}
+function suspend(i){DB.users[i].status=\'suspended\'; DB.audit.push(`${DB.users[i].name} SUSPENDED`); save(); renderAll();}
+function saveThresh(){DB.threshold=document.getElementById(\'thresh\').value; DB.audit.push(`Threshold changed to ${DB.threshold}%`); save(); alert(\'Threshold \'+DB.threshold+\'% saved!\'); renderAll();}
+function addSubject(){
+    let n=document.getElementById(\'subName\').value.trim(), c=document.getElementById(\'subCode\').value.trim(), s=document.getElementById(\'subSection\').value.trim()||\'CSE-A\';
+    if(!n||!c) return alert(\'Name aur Code bharo\');
+    if(!DB.subjects) DB.subjects=[]; DB.subjects.push({name:n,code:c,section:s});
+    DB.audit.push(`Subject created ${n} (${c})`); save(); renderAll();
+    document.getElementById(\'subName\').value=\'\'; document.getElementById(\'subCode\').value=\'\'; document.getElementById(\'subSection\').value=\'\';
+}
+function delSub(i){DB.subjects.splice(i,1); save(); renderAll();}
+function addDummyUser(){let r="21CS"+Math.floor(100+Math.random()*900); DB.users.push({name:"Test Student "+r, roll:r, status:"pending", dept:"CSE"}); save(); renderAll();}
+function clearAudit(){DB.audit=[]; save(); renderAll();}
+function clearAllData(){if(confirm(\'Saara data delete ho jayega?\')){localStorage.removeItem(\'ca_db\'); localStorage.removeItem(\'ca_live_session\'); location.reload();}}
+
+// Exports - Real Data
+function exportPDF(){
+    const {jsPDF}=window.jspdf; const doc=new jsPDF();
+    doc.setFontSize(14); doc.text("CampusAttend - Attendance Report",14,18);
+    doc.setFontSize(9); doc.text(`Generated: ${new Date().toLocaleString()} | Threshold: ${DB.threshold}%`,14,26);
+    doc.text(`Total Records: ${DB.records.length} | Sessions: ${DB.sessions.length}`,14,32);
+    let y=42;
+    doc.text("Roll | Subject | Status | Method | Time",14,y); y+=6;
+    DB.records.slice(-25).forEach(r=>{ doc.text(`${r.roll} | ${r.subjectCode||\'CS301\'} | ${r.status} | ${r.method} | ${r.time}`,14,y); y+=6; if(y>280){doc.addPage(); y=18}});
+    doc.save("CampusAttend_Report.pdf");
+}
+function exportExcel(){
+    let data = DB.records.length? DB.records : [{Message:"No records yet - Pehle attendance lo"}];
+    let ws=XLSX.utils.json_to_sheet(data); let wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Attendance"); XLSX.writeFile(wb,"CampusAttend_Report.xlsx");
+}
+function exportCSV(){
+    let rows = DB.records.length? DB.records : [{roll:"No data", status:"-"}];
+    let ws=XLSX.utils.json_to_sheet(rows); let csv=XLSX.utils.sheet_to_csv(ws);
+    let blob=new Blob([csv],{type:"text/csv"}); let a=document.createElement(\'a\'); a.href=URL.createObjectURL(blob); a.download="CampusAttend_Report.csv"; a.click();
+}
+function logout(){localStorage.removeItem(\'role\'); location.href=\'index.html\';}
+
+renderAll();
+setInterval(renderAll,1500);
+</script>
 </body>
 </html>

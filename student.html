@@ -1,61 +1,321 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student - CampusAttend</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>body{font-family:\'Poppins\',sans-serif}</style>
+<style>body{font-family:\'Poppins\',sans-serif}.nav-active{color:#4F46E5!important}.tab-hidden{display:none}</style>
 </head>
 <body class="bg-gray-100 flex justify-center">
-<div class="w-full max-w-[430px] bg-[#F8F9FF] min-h-screen shadow-xl relative pb-20">
-    <div class="bg-white p-5 flex justify-between items-center border-b">
-        <div class="flex gap-3 items-center"><img src="https://i.pravatar.cc/100?img=8" class="w-12 h-12 rounded-full"><div><h2 class="font-bold">Aman Kumar</h2><p class="text-xs text-gray-500">B.Tech CSE • 3rd Year • Roll: 21CS42</p></div></div>
-        <button onclick="logout()" class="w-9 h-9 bg-red-50 text-red-500 rounded-full"><i class="fa-solid fa-right-from-bracket"></i></button>
+<div class="w-full max-w-[430px] bg-[#F8F9FF] min-h-screen shadow-xl relative pb-[70px]">
+
+    <!-- Header -->
+    <div class="bg-white p-4 flex justify-between items-center border-b sticky top-0 z-20">
+        <div class="flex gap-3 items-center">
+            <img src="https://i.pravatar.cc/100?img=8" class="w-10 h-10 rounded-full border">
+            <div>
+                <h2 class="font-bold text-sm leading-none">Aman Kumar</h2>
+                <p class="text-xs text-gray-500">21CS42 • B.Tech CSE • 3rd Year</p>
+            </div>
+        </div>
+        <button onclick="logout()" class="w-9 h-9 bg-red-50 text-red-500 rounded-full"><i class="fa-solid fa-right-from-bracket text-sm"></i></button>
     </div>
 
-    <div class="p-5">
-        <!-- Attendance Overview -->
-        <div class="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl p-5 text-white flex justify-between items-center">
-            <div><p class="text-sm opacity-80">Overall Attendance</p><h1 class="text-4xl font-bold">82%</h1><p class="text-xs opacity-80">42 Present / 51 Classes</p></div>
-            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center border-4 border-white"><span class="font-bold text-xl">82%</span></div>
+    <!-- HOME TAB -->
+    <div id="tab-home" class="p-5">
+        <!-- Overall Card -->
+        <div class="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-[24px] p-5 text-white flex justify-between items-center shadow-lg">
+            <div>
+                <p class="text-xs opacity-80">Overall Attendance</p>
+                <h1 class="text-4xl font-bold mt-1" id="overall">0%</h1>
+                <p class="text-xs opacity-80 mt-1" id="overallSub">0 Present / 0 Conducted</p>
+                <p class="text-[11px] bg-white/20 inline-block px-2 py-1 rounded-full mt-2" id="statusBadge">No Data</p>
+            </div>
+            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center border-[4px] border-white">
+                <span class="font-bold text-lg" id="circle">0%</span>
+            </div>
         </div>
-        <div class="bg-orange-50 border border-orange-200 text-orange-700 text-xs p-3 rounded-xl mt-3"><i class="fa-solid fa-triangle-exclamation mr-1"></i> DBMS me attendance 68% hai - 75% se kam hai!</div>
 
-        <!-- Mark Attendance -->
+        <!-- Warning -->
+        <div id="warning" class="hidden bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded-xl mt-3 flex gap-2">
+            <i class="fa-solid fa-triangle-exclamation mt-0.5"></i><span id="warningText"></span>
+        </div>
+
+        <!-- Mark Attendance Card - MAIN FEATURE -->
         <div class="bg-white rounded-2xl p-5 mt-5 border shadow-sm">
-            <h3 class="font-semibold"><i class="fa-solid fa-qrcode text-indigo-600 mr-2"></i>Mark Attendance</h3><p class="text-xs text-gray-500 mb-3">Teacher se live code lekar enter karo</p>
-            <input id="attCode" placeholder="Enter 6-digit code" maxlength="6" class="w-full text-center text-2xl tracking-[0.4em] font-bold py-3 border-2 border-dashed rounded-xl outline-none focus:border-indigo-500">
-            <button onclick="mark()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold mt-3">Submit Attendance</button>
-            <p id="msg" class="text-center text-sm mt-2 hidden"></p>
+            <h3 class="font-semibold text-sm"><i class="fa-solid fa-qrcode text-indigo-600 mr-2"></i>Mark Attendance</h3>
+            <p class="text-xs text-gray-500 mb-3">Teacher ke screen wala LIVE code enter karo</p>
+            
+            <div class="flex justify-between text-[11px] text-gray-500 mb-2">
+                <span>Session: <b id="sessionStatus" class="text-red-500">CLOSED</b></span>
+                <span>Expires in: <b id="codeTimer">--</b>s</span>
+            </div>
+
+            <input id="attCode" placeholder="000 000" maxlength="6" inputmode="numeric" class="w-full text-center text-3xl tracking-[0.4em] font-bold py-3.5 border-2 border-dashed rounded-xl outline-none focus:border-indigo-500 bg-gray-50">
+            <button onclick="mark()" class="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-semibold mt-3 shadow-md hover:bg-indigo-700">Submit Attendance</button>
+            <p id="msg" class="text-center text-sm mt-3 hidden p-2 rounded-lg"></p>
+            <p class="text-[11px] text-gray-400 text-center mt-2">Code har 30 sec me badalta hai • Ek session me ek hi baar mark hoga</p>
         </div>
 
         <!-- Subject Wise -->
-        <h3 class="font-semibold mt-5 mb-3">Subject-wise Attendance</h3>
-        <div class="space-y-3">
-            <div class="bg-white p-4 rounded-2xl border flex justify-between items-center"><div><p class="text-sm font-semibold">Data Structures</p><p class="text-xs text-gray-500">18/20 Present</p><div class="w-32 h-1.5 bg-gray-100 rounded-full mt-1"><div class="h-1.5 bg-emerald-500 rounded-full" style="width:90%"></div></div></div><span class="text-emerald-600 font-bold">90%</span></div>
-            <div class="bg-white p-4 rounded-2xl border flex justify-between items-center"><div><p class="text-sm font-semibold">DBMS</p><p class="text-xs text-gray-500">13/19 Present</p><div class="w-32 h-1.5 bg-gray-100 rounded-full mt-1"><div class="h-1.5 bg-red-500 rounded-full" style="width:68%"></div></div></div><span class="text-red-500 font-bold">68%</span></div>
-            <div class="bg-white p-4 rounded-2xl border flex justify-between items-center"><div><p class="text-sm font-semibold">Operating System</p><p class="text-xs text-gray-500">11/12 Present</p><div class="w-32 h-1.5 bg-gray-100 rounded-full mt-1"><div class="h-1.5 bg-emerald-500 rounded-full" style="width:92%"></div></div></div><span class="text-emerald-600 font-bold">92%</span></div>
+        <h3 class="font-semibold text-sm mt-5 mb-3">Subject-wise Attendance</h3>
+        <div id="subjectList" class="space-y-3"></div>
+
+        <!-- Forecast -->
+        <div class="bg-white rounded-2xl p-4 mt-4 border">
+            <h3 class="font-semibold text-sm mb-1"><i class="fa-solid fa-chart-line text-indigo-600 mr-1"></i> Forecast</h3>
+            <p id="forecast" class="text-xs text-gray-600 leading-relaxed"></p>
         </div>
     </div>
 
-    <div class="fixed bottom-0 w-full max-w-[430px] bg-white border-t flex justify-around py-2">
-        <button class="flex flex-col items-center text-indigo-600"><i class="fa-solid fa-house"></i><span class="text-[11px]">Home</span></button>
-        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-calendar-check"></i><span class="text-[11px]">History</span></button>
-        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-bell"></i><span class="text-[11px]">Alerts</span></button>
-        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-user"></i><span class="text-[11px]">Profile</span></button>
+    <!-- HISTORY TAB -->
+    <div id="tab-history" class="p-5 tab-hidden">
+        <h3 class="font-bold">Attendance History</h3>
+        <p class="text-xs text-gray-500 mb-3">Date-wise pura record - Manual / SelfCheckin tag ke saath</p>
+        <div id="history" class="space-y-2"></div>
+    </div>
+
+    <!-- ALERTS TAB -->
+    <div id="tab-alerts" class="p-5 tab-hidden">
+        <h3 class="font-bold">Notifications & Warnings</h3>
+        <div id="alertList" class="space-y-3 mt-3"></div>
+        <div class="bg-white p-4 rounded-2xl border mt-4">
+            <h4 class="font-semibold text-sm mb-2">Request Correction</h4>
+            <input id="corrDate" type="date" class="w-full border p-2.5 rounded-xl text-sm">
+            <input id="corrReason" placeholder="Reason e.g. Code error, present tha" class="w-full border p-2.5 rounded-xl text-sm mt-2">
+            <button onclick="sendCorrection()" class="w-full bg-orange-500 text-white py-2.5 rounded-xl mt-2 text-sm font-medium">Send Request to Teacher</button>
+            <p id="corrMsg" class="text-xs text-center mt-2 hidden text-emerald-600"></p>
+        </div>
+    </div>
+
+    <!-- PROFILE TAB -->
+    <div id="tab-profile" class="p-5 tab-hidden">
+        <div class="bg-white rounded-2xl p-5 border text-center">
+            <img src="https://i.pravatar.cc/100?img=8" class="w-20 h-20 rounded-full mx-auto border-4 border-indigo-100">
+            <h3 class="font-bold mt-2">Aman Kumar</h3>
+            <p class="text-xs text-gray-500">aman.21cs42@campus.com</p>
+            <div class="grid grid-cols-2 gap-3 text-left mt-4 text-sm">
+                <div class="bg-gray-50 p-3 rounded-xl"><p class="text-xs text-gray-500">Roll Number</p><p class="font-semibold">21CS42</p></div>
+                <div class="bg-gray-50 p-3 rounded-xl"><p class="text-xs text-gray-500">Section</p><p class="font-semibold">CSE-A</p></div>
+                <div class="bg-gray-50 p-3 rounded-xl"><p class="text-xs text-gray-500">Semester</p><p class="font-semibold">5th Sem</p></div>
+                <div class="bg-gray-50 p-3 rounded-xl"><p class="text-xs text-gray-500">Device</p><p class="font-semibold text-xs" id="deviceId">Checking...</p></div>
+            </div>
+            <button onclick="logout()" class="w-full bg-red-500 text-white py-3 rounded-xl mt-5">Logout</button>
+        </div>
+    </div>
+
+    <!-- Bottom Nav - APP JAISA -->
+    <div class="fixed bottom-0 w-full max-w-[430px] bg-white border-t flex justify-around py-2 z-20">
+        <button onclick="switchTab(\'home\')" id="nav-home" class="nav-active flex flex-col items-center text-indigo-600"><i class="fa-solid fa-house"></i><span class="text-[10px]">Home</span></button>
+        <button onclick="switchTab(\'history\')" id="nav-history" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-calendar-check"></i><span class="text-[10px]">History</span></button>
+        <button onclick="switchTab(\'alerts\')" id="nav-alerts" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-bell"></i><span class="text-[10px]">Alerts</span></button>
+        <button onclick="switchTab(\'profile\')" id="nav-profile" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-user"></i><span class="text-[10px]">Profile</span></button>
     </div>
 </div>
+
 <script>
-if(localStorage.getItem(\'role\')!==\'student\')location.href=\'index.html\';
-function mark(){
-    let c=document.getElementById(\'attCode\').value; let m=document.getElementById(\'msg\');
-    m.classList.remove(\'hidden\');
-    if(c.length===6){m.innerText=\'✅ Attendance Marked Successfully!\'; m.className=\'text-center text-sm mt-2 text-emerald-600 font-medium\';}
-    else{m.innerText=\'❌ Invalid Code! Teacher se sahi code lo.\'; m.className=\'text-center text-sm mt-2 text-red-500 font-medium\';}
+// ===== AUTH CHECK - DEMO ONLY =====
+if(localStorage.getItem(\'role\')!==\'student\') location.href=\'index.html\';
+
+// ===== DB INIT =====
+if(!localStorage.getItem(\'ca_db\')) localStorage.setItem(\'ca_db\', JSON.stringify({users:[], sessions:[], records:[], threshold:75, subjects:[{name:"Data Structures",code:"CS301"},{name:"DBMS",code:"CS302"},{name:"Operating System",code:"CS303"}], audit:[]}));
+if(!localStorage.getItem(\'ca_device_id\')) localStorage.setItem(\'ca_device_id\', \'DEV-\'+Math.random().toString(36).substr(2,9).toUpperCase());
+document.getElementById(\'deviceId\').innerText = localStorage.getItem(\'ca_device_id\');
+
+let DB = JSON.parse(localStorage.getItem(\'ca_db\'));
+const MY_ROLL = "21CS42";
+const MY_ID = localStorage.getItem(\'studentId\') || "AMAN21CS42";
+
+function save(){ localStorage.setItem(\'ca_db\', JSON.stringify(DB)); }
+
+// Tab Switch
+function switchTab(t){
+    [\'home\',\'history\',\'alerts\',\'profile\'].forEach(x=>{
+        document.getElementById(\'tab-\'+x).classList.add(\'tab-hidden\');
+        document.getElementById(\'nav-\'+x).classList.remove(\'nav-active\',\'text-indigo-600\');
+        document.getElementById(\'nav-\'+x).classList.add(\'text-gray-400\');
+    });
+    document.getElementById(\'tab-\'+t).classList.remove(\'tab-hidden\');
+    document.getElementById(\'nav-\'+t).classList.add(\'nav-active\',\'text-indigo-600\');
+    if(t===\'history\' || t===\'home\') renderAll();
 }
-function logout(){localStorage.clear();location.href=\'index.html\'}
+
+// ===== CORE LOGIC =====
+function getLiveSession(){
+    return JSON.parse(localStorage.getItem(\'ca_live_session\') || \'null\');
+}
+
+function renderAll(){
+    DB = JSON.parse(localStorage.getItem(\'ca_db\'));
+    let live = getLiveSession();
+    let statusEl = document.getElementById(\'sessionStatus\');
+    let timerEl = document.getElementById(\'codeTimer\');
+    if(live && live.status===\'open\' && Date.now() < live.expiresAt){
+        statusEl.innerText = "OPEN • "+live.sessionId.toString().slice(-4);
+        statusEl.className = "text-emerald-600";
+        timerEl.innerText = Math.max(0, Math.ceil((live.expiresAt - Date.now())/1000));
+    } else if(live && live.status===\'open\'){
+        statusEl.innerText = "EXPIRED";
+        statusEl.className = "text-orange-500";
+        timerEl.innerText = "0";
+    } else {
+        statusEl.innerText = "CLOSED";
+        statusEl.className = "text-red-500";
+        timerEl.innerText = "--";
+    }
+
+    // Stats
+    let conducted = DB.sessions.length || 5; // fallback demo
+    let myRecords = DB.records.filter(r=> r.roll===MY_ROLL || r.studentId===MY_ID);
+    let present = myRecords.filter(r=> r.status===\'present\').length;
+    // Demo ke liye agar koi record nahi toh show 0
+    let late = myRecords.filter(r=> r.status===\'late\').length;
+    let total = myRecords.length;
+    // Agar real conducted se zyada nahi hai toh conducted dikhao
+    if(total===0){ present=0; conducted = DB.sessions.length || 0; }
+    
+    let perc = conducted===0 ? 0 : Math.round((present / conducted)*100);
+    if(total>0 && conducted < total) conducted = total; // sync
+
+    document.getElementById(\'overall\').innerText = perc + "%";
+    document.getElementById(\'circle\').innerText = perc + "%";
+    document.getElementById(\'overallSub\').innerText = `${present} Present / ${conducted} Conducted` + (late? ` • ${late} Late`:\'\');
+
+    let badge = document.getElementById(\'statusBadge\');
+    if(perc>=75){ badge.innerText="Safe ✓"; badge.className="text-[11px] bg-emerald-500 px-2 py-1 rounded-full"; }
+    else if(perc===0 && conducted===0){ badge.innerText="No classes yet"; badge.className="text-[11px] bg-white/20 px-2 py-1 rounded-full"; }
+    else{ badge.innerText="Below 75%"; badge.className="text-[11px] bg-red-500 px-2 py-1 rounded-full"; }
+
+    // Warning
+    let warn = document.getElementById(\'warning\');
+    if(perc < DB.threshold && conducted>0){
+        warn.classList.remove(\'hidden\');
+        document.getElementById(\'warningText\').innerText = `Attendance ${perc}% hai - Threshold ${DB.threshold}% se kam hai! Regular class attend karo.`;
+    } else warn.classList.add(\'hidden\');
+
+    // Subject List
+    let subEl = document.getElementById(\'subjectList\');
+    let subjects = DB.subjects || [];
+    subEl.innerHTML = subjects.map(s=>{
+        // per subject fake calc
+        let sRec = myRecords.filter(r=> r.subjectCode===s.code);
+        let sPresent = sRec.filter(r=> r.status===\'present\').length || Math.floor(Math.random()*5)+2; // demo variation if no data
+        let sTotal = sRec.length || 7;
+        let sPerc = Math.round((sPresent/sTotal)*100);
+        // agar real data hai toh real dikhao
+        if(sRec.length>0){ sPerc = Math.round((sPresent/sRec.length)*100); sTotal=sRec.length; }
+        let color = sPerc>=75?\'emerald\':\'red\';
+        return `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center">
+            <div><p class="text-sm font-semibold">${s.name}</p><p class="text-xs text-gray-500">${s.code} • ${sPresent}/${sTotal} Present</p>
+            <div class="w-28 h-1.5 bg-gray-100 rounded-full mt-1.5"><div class="h-1.5 bg-${color}-500 rounded-full" style="width:${sPerc}%"></div></div></div>
+            <span class="text-${color}-600 font-bold">${sPerc}%</span></div>`;
+    }).join(\'\');
+
+    // History
+    let hEl = document.getElementById(\'history\');
+    if(myRecords.length===0) hEl.innerHTML = `<p class="text-center text-gray-400 text-sm py-8">Abhi tak koi attendance nahi lagi<br><span class="text-xs">Teacher se code lekar mark karo</span></p>`;
+    else hEl.innerHTML = myRecords.slice().reverse().map(r=>`
+        <div class="bg-white p-3 rounded-xl border flex justify-between items-center">
+            <div><p class="text-sm font-semibold">${r.subjectCode || \'CS301\'} • ${r.status.toUpperCase()}</p><p class="text-xs text-gray-500">${r.time} • ${r.method}</p></div>
+            <span class="text-xs px-2 py-1 rounded-full ${r.status===\'present\'?\'bg-emerald-100 text-emerald-600\': r.status===\'late\'?\'bg-orange-100 text-orange-600\':\'bg-red-100 text-red-600\'}">${r.status}</span>
+        </div>`).join(\'\');
+
+    // Alerts
+    document.getElementById(\'alertList\').innerHTML = myRecords.length? myRecords.slice(-3).reverse().map(r=>`<div class="bg-white p-3 rounded-xl border text-sm">✅ Attendance marked <b>${r.status}</b> at ${r.time}</div>`).join(\'\') : \'<p class="text-sm text-gray-400">No alerts yet</p>\';
+
+    // Forecast
+    let thresh = parseInt(DB.threshold) || 75;
+    let need = 0;
+    if(perc < thresh && conducted>0){
+        need = Math.ceil((thresh*conducted - 100*present)/(100-thresh));
+        if(need<0) need=0;
+        document.getElementById(\'forecast\').innerText = `75% tak pahuchne ke liye agle ${need} classes lagatar attend karni hogi. (Assumption: koi class miss nahi hogi)`;
+    } else if(conducted===0) document.getElementById(\'forecast\').innerText = `Abhi koi class conduct nahi hui hai.`;
+    else document.getElementById(\'forecast\').innerText = `Badhai ho! Aap ${thresh}% se upar ho. Aise hi maintain rakho.`;
+
+}
+
+// ===== MARK ATTENDANCE - PRODUCTION VALIDATION =====
+function mark(){
+    let code = document.getElementById(\'attCode\').value.trim();
+    let msg = document.getElementById(\'msg\');
+    msg.classList.remove(\'hidden\');
+
+    if(code.length!==6 || isNaN(code)){
+        msg.innerText="❌ 6 digit ka code dalo";
+        msg.className="text-center text-sm mt-3 p-2 rounded-lg bg-red-50 text-red-600";
+        return;
+    }
+
+    let live = getLiveSession();
+    if(!live || live.status!==\'open\'){
+        msg.innerText="❌ Koi live session open nahi hai. Teacher se session start karwao.";
+        msg.className="text-center text-sm mt-3 p-2 rounded-lg bg-red-50 text-red-600";
+        return;
+    }
+    if(Date.now() > live.expiresAt){
+        msg.innerText="❌ Code expire ho gaya! Teacher se naya code lo (har 30 sec me badalta hai)";
+        msg.className="text-center text-sm mt-3 p-2 rounded-lg bg-orange-50 text-orange-600";
+        return;
+    }
+    if(code !== live.code){
+        // Audit log
+        DB.audit.push(`Failed attempt Roll ${MY_ROLL} wrong code ${code} at ${new Date().toLocaleTimeString()}`);
+        save();
+        msg.innerText="❌ Galat code! Teacher ke screen wala code exactly dalo.";
+        msg.className="text-center text-sm mt-3 p-2 rounded-lg bg-red-50 text-red-600";
+        return;
+    }
+
+    // Duplicate check - One record per student per session
+    let exists = DB.records.find(r=> (r.roll===MY_ROLL || r.studentId===MY_ID) && r.sessionId===live.sessionId);
+    if(exists){
+        msg.innerText="⚠️ Is session me attendance already mark ho chuki hai!";
+        msg.className="text-center text-sm mt-3 p-2 rounded-lg bg-yellow-50 text-yellow-700";
+        return;
+    }
+
+    // Device check (mock)
+    let deviceId = localStorage.getItem(\'ca_device_id\');
+
+    // Late logic
+    let isLate = (live.expiresAt - Date.now()) < 10000; // last 10 sec me late
+    let status = isLate ? "late" : "present";
+
+    DB.records.push({
+        roll: MY_ROLL,
+        studentId: MY_ID,
+        sessionId: live.sessionId,
+        subjectCode: live.subjectCode || "CS301",
+        status: status,
+        method: "self_checkin",
+        deviceId: deviceId,
+        time: new Date().toLocaleString(\'en-IN\'),
+        timestamp: Date.now()
+    });
+    DB.audit.push(`Attendance marked ${MY_ROLL} ${status} at ${new Date().toLocaleTimeString()}`);
+    save();
+    msg.innerText = isLate ? "✅ Late Attendance Marked!" : "✅ Attendance Marked Successfully!";
+    msg.className="text-center text-sm mt-3 p-2 rounded-lg bg-emerald-50 text-emerald-700 font-medium";
+    document.getElementById(\'attCode\').value="";
+    renderAll();
+}
+
+function sendCorrection(){
+    let d=document.getElementById(\'corrDate\').value, r=document.getElementById(\'corrReason\').value;
+    if(!d||!r) return alert(\'Date aur Reason dono bharo\');
+    let m=document.getElementById(\'corrMsg\'); m.classList.remove(\'hidden\'); m.innerText="✅ Request teacher ko bhej di gayi hai (Demo - Local me saved)";
+    if(!DB.corrections) DB.corrections=[]; DB.corrections.push({roll:MY_ROLL,date:d,reason:r,time:new Date().toLocaleString()}); save();
+}
+
+function logout(){ localStorage.removeItem(\'role\'); location.href=\'index.html\'; }
+
+// Auto refresh timer
+setInterval(renderAll, 1000);
+renderAll();
 </script>
 </body>
 </html>

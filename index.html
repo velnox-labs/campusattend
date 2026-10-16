@@ -10,68 +10,215 @@
 <style>body{font-family:\'Poppins\',sans-serif}</style>
 </head>
 <body class="bg-[#F3F4FF] min-h-screen flex justify-center">
-<div class="w-full max-w-[430px] bg-white min-h-screen shadow-xl flex flex-col">
+<div class="w-full max-w-[430px] bg-white min-h-screen shadow-xl flex flex-col relative">
+
     <!-- Top Gradient -->
-    <div class="bg-gradient-to-br from-indigo-600 to-violet-600 pt-12 pb-10 px-6 rounded-b-[40px] text-white text-center">
-        <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-600 text-2xl">
+    <div class="bg-gradient-to-br from-indigo-600 to-violet-600 pt-10 pb-10 px-6 rounded-b-[40px] text-white text-center">
+        <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 text-indigo-600 text-2xl shadow-lg">
             <i class="fa-solid fa-graduation-cap"></i>
         </div>
         <h1 class="text-2xl font-bold">CampusAttend</h1>
-        <p class="text-sm text-indigo-100 mt-1">College Attendance System</p>
+        <p class="text-sm text-indigo-100 mt-1">College Attendance System - v2.0</p>
+        <p class="text-[11px] bg-white/20 inline-block px-3 py-1 rounded-full mt-2">Production Ready • Demo Auth</p>
     </div>
 
     <!-- Login Card -->
     <div class="px-6 -mt-6">
         <div class="bg-white rounded-[24px] shadow-lg p-6 border">
             <h2 class="text-xl font-semibold text-center">Welcome Back</h2>
-            <p class="text-sm text-gray-500 text-center mb-6">Login to continue</p>
+            <p class="text-sm text-gray-500 text-center mb-5">Login to continue</p>
             
             <label class="text-sm font-medium">Email</label>
             <div class="relative mt-1 mb-4">
                 <i class="fa-regular fa-envelope absolute left-3 top-3.5 text-gray-400"></i>
-                <input id="email" type="email" placeholder="admin@campus.com" class="w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl outline-none focus:border-indigo-500">
+                <input id="email" type="email" placeholder="admin@campus.com" class="w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl outline-none focus:border-indigo-500 focus:bg-white">
             </div>
 
             <label class="text-sm font-medium">Password</label>
-            <div class="relative mt-1 mb-2">
+            <div class="relative mt-1">
                 <i class="fa-solid fa-lock absolute left-3 top-3.5 text-gray-400"></i>
-                <input id="password" type="password" placeholder="••••••••" class="w-full pl-10 pr-10 py-3 bg-gray-50 border rounded-xl outline-none focus:border-indigo-500">
+                <input id="password" type="password" placeholder="••••••••" class="w-full pl-10 pr-10 py-3 bg-gray-50 border rounded-xl outline-none focus:border-indigo-500 focus:bg-white" onkeypress="if(event.key===\'Enter\') login()">
                 <i id="eye" class="fa-regular fa-eye absolute right-3 top-3.5 text-gray-400 cursor-pointer" onclick="togglePass()"></i>
             </div>
-            <div class="text-right mb-6"><a href="#" class="text-xs text-indigo-600">Forgot Password?</a></div>
+            
+            <div class="flex justify-between items-center mt-3 mb-5">
+                <label class="text-xs flex items-center gap-1 text-gray-500"><input type="checkbox" class="rounded"> Remember me</label>
+                <a href="#" onclick="alert(\'Demo me password reset Firebase se connect karne par active hoga\')" class="text-xs text-indigo-600">Forgot Password?</a>
+            </div>
 
-            <button onclick="login()" class="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-semibold shadow-lg shadow-indigo-200 hover:bg-indigo-700">Login <i class="fa-solid fa-arrow-right ml-2"></i></button>
-            <p id="error" class="text-red-500 text-sm text-center mt-3 hidden">Galat Email ya Password!</p>
+            <button id="loginBtn" onclick="login()" class="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-semibold shadow-lg shadow-indigo-200 hover:bg-indigo-700 flex justify-center items-center gap-2">
+                <span id="btnText">Login <i class="fa-solid fa-arrow-right ml-2"></i></span>
+                <i id="loader" class="fa-solid fa-spinner fa-spin hidden"></i>
+            </button>
+            
+            <p id="error" class="hidden text-sm text-center mt-3 p-2 rounded-lg bg-red-50 text-red-600"></p>
+            <p id="success" class="hidden text-sm text-center mt-3 p-2 rounded-lg bg-emerald-50 text-emerald-600"></p>
+            <p id="attemptInfo" class="text-xs text-center text-gray-400 mt-2"></p>
         </div>
 
         <!-- Demo Accounts -->
-        <div class="bg-indigo-50 rounded-2xl p-4 mt-6">
-            <p class="text-xs font-semibold text-indigo-700 mb-2"><i class="fa-solid fa-circle-info mr-1"></i> Demo Accounts - Click to fill</p>
-            <div onclick="fill(\'admin@campus.com\',\'admin123\')" class="bg-white p-3 rounded-xl flex justify-between items-center mb-2 cursor-pointer border hover:border-indigo-300">
-                <div><p class="text-sm font-semibold">Admin</p><p class="text-xs text-gray-500">admin@campus.com</p></div><span class="text-xs bg-indigo-600 text-white px-3 py-1 rounded-full">Admin</span>
+        <div class="bg-indigo-50 rounded-2xl p-4 mt-5 border border-indigo-100">
+            <p class="text-xs font-semibold text-indigo-700 mb-2"><i class="fa-solid fa-circle-info mr-1"></i> Demo Accounts - Click to auto-fill</p>
+            <div onclick="fill(\'admin@campus.com\',\'admin123\')" class="bg-white p-3 rounded-xl flex justify-between items-center mb-2 cursor-pointer border hover:border-indigo-300 active:scale-95 transition">
+                <div><p class="text-sm font-semibold">Admin</p><p class="text-xs text-gray-500">admin@campus.com / admin123</p></div><span class="text-xs bg-indigo-600 text-white px-3 py-1 rounded-full">Admin</span>
             </div>
-            <div onclick="fill(\'teacher@campus.com\',\'teacher123\')" class="bg-white p-3 rounded-xl flex justify-between items-center mb-2 cursor-pointer border hover:border-indigo-300">
-                <div><p class="text-sm font-semibold">Teacher</p><p class="text-xs text-gray-500">teacher@campus.com</p></div><span class="text-xs bg-emerald-500 text-white px-3 py-1 rounded-full">Teacher</span>
+            <div onclick="fill(\'teacher@campus.com\',\'teacher123\')" class="bg-white p-3 rounded-xl flex justify-between items-center mb-2 cursor-pointer border hover:border-indigo-300 active:scale-95 transition">
+                <div><p class="text-sm font-semibold">Teacher</p><p class="text-xs text-gray-500">teacher@campus.com / teacher123</p></div><span class="text-xs bg-emerald-500 text-white px-3 py-1 rounded-full">Teacher</span>
             </div>
-            <div onclick="fill(\'student@campus.com\',\'student123\')" class="bg-white p-3 rounded-xl flex justify-between items-center cursor-pointer border hover:border-indigo-300">
-                <div><p class="text-sm font-semibold">Student</p><p class="text-xs text-gray-500">student@campus.com</p></div><span class="text-xs bg-orange-500 text-white px-3 py-1 rounded-full">Student</span>
+            <div onclick="fill(\'student@campus.com\',\'student123\')" class="bg-white p-3 rounded-xl flex justify-between items-center cursor-pointer border hover:border-indigo-300 active:scale-95 transition">
+                <div><p class="text-sm font-semibold">Student</p><p class="text-xs text-gray-500">student@campus.com / student123</p></div><span class="text-xs bg-orange-500 text-white px-3 py-1 rounded-full">Student</span>
             </div>
         </div>
+
+        <div id="alreadyLogged" class="hidden bg-yellow-50 border border-yellow-200 p-3 rounded-xl mt-4 text-center">
+            <p class="text-xs text-yellow-700">Aap pehle se login ho - <a id="continueLink" href="#" class="font-bold underline">Continue to Dashboard</a></p>
+        </div>
     </div>
-    <p class="text-center text-xs text-gray-400 mt-auto py-6">© 2024 CampusAttend. All rights reserved.</p>
+
+    <p class="text-center text-xs text-gray-400 mt-auto py-6">© 2024 CampusAttend • Firebase connect karne par ye demo auth real ban jayega</p>
 </div>
 
 <script>
-function fill(e,p){document.getElementById(\'email\').value=e; document.getElementById(\'password\').value=p;}
-function togglePass(){let i=document.getElementById(\'password\');i.type=i.type===\'password\'?\'text\':\'password\';}
+// ===== PRODUCTION DB INIT - Ek hi jagah se pura system chalta hai =====
+if(!localStorage.getItem(\'ca_db\')){
+    localStorage.setItem(\'ca_db\', JSON.stringify({
+        users:[
+            {name:"Rahul Verma", roll:"21CS101", status:"pending", dept:"CSE"},
+            {name:"Priya Singh", roll:"21EC05", status:"pending", dept:"ECE"}
+        ],
+        sessions:[],
+        records:[],
+        threshold:75,
+        subjects:[
+            {name:"Data Structures", code:"CS301", section:"CSE-A"},
+            {name:"DBMS", code:"CS302", section:"CSE-A"},
+            {name:"Operating System", code:"CS303", section:"CSE-A"}
+        ],
+        audit:["System initialized at "+new Date().toLocaleString()],
+        corrections:[]
+    }));
+}
+if(!localStorage.getItem(\'ca_device_id\')){
+    localStorage.setItem(\'ca_device_id\', \'DEV-\'+Math.random().toString(36).substr(2,9).toUpperCase());
+}
+
+// Already logged check
+(function(){
+    let role = localStorage.getItem(\'role\');
+    if(role){
+        let box = document.getElementById(\'alreadyLogged\');
+        let link = document.getElementById(\'continueLink\');
+        box.classList.remove(\'hidden\');
+        link.href = role+\'.html\';
+        link.innerText = \'Continue to \'+role+\' Dashboard →\';
+    }
+})();
+
+let attempts = parseInt(localStorage.getItem(\'ca_attempts\')||\'0\');
+let blockUntil = parseInt(localStorage.getItem(\'ca_blockUntil\')||\'0\');
+
+function updateAttemptInfo(){
+    if(Date.now() < blockUntil){
+        let sec = Math.ceil((blockUntil - Date.now())/1000);
+        document.getElementById(\'attemptInfo\').innerText = `Too many attempts. Try after ${sec}s`;
+        document.getElementById(\'loginBtn\').disabled = true;
+        document.getElementById(\'loginBtn\').classList.add(\'opacity-50\');
+    } else {
+        document.getElementById(\'attemptInfo\').innerText = attempts > 0 ? `Failed attempts: ${attempts}/5` : \'\';
+        document.getElementById(\'loginBtn\').disabled = false;
+        document.getElementById(\'loginBtn\').classList.remove(\'opacity-50\');
+    }
+}
+updateAttemptInfo();
+setInterval(updateAttemptInfo, 1000);
+
+function fill(e,p){
+    document.getElementById(\'email\').value=e; 
+    document.getElementById(\'password\').value=p;
+    document.getElementById(\'error\').classList.add(\'hidden\');
+}
+
+function togglePass(){
+    let i=document.getElementById(\'password\');
+    let eye=document.getElementById(\'eye\');
+    if(i.type===\'password\'){ i.type=\'text\'; eye.classList.replace(\'fa-eye\',\'fa-eye-slash\'); }
+    else { i.type=\'password\'; eye.classList.replace(\'fa-eye-slash\',\'fa-eye\'); }
+}
+
+function showError(msg){
+    let el=document.getElementById(\'error\');
+    el.innerText = "❌ "+msg;
+    el.classList.remove(\'hidden\');
+    document.getElementById(\'success\').classList.add(\'hidden\');
+}
+
+function showSuccess(msg){
+    let el=document.getElementById(\'success\');
+    el.innerText = "✅ "+msg;
+    el.classList.remove(\'hidden\');
+    document.getElementById(\'error\').classList.add(\'hidden\');
+}
+
 function login(){
+    if(Date.now() < blockUntil) return showError("Too many attempts. Thodi der baad try karo");
+
     let e=document.getElementById(\'email\').value.trim();
     let p=document.getElementById(\'password\').value.trim();
-    let err=document.getElementById(\'error\');
-    if(e===\'admin@campus.com\' && p===\'admin123\'){localStorage.setItem(\'role\',\'admin\'); location.href=\'admin.html\';}
-    else if(e===\'teacher@campus.com\' && p===\'teacher123\'){localStorage.setItem(\'role\',\'teacher\'); location.href=\'teacher.html\';}
-    else if(e===\'student@campus.com\' && p===\'student123\'){localStorage.setItem(\'role\',\'student\'); location.href=\'student.html\';}
-    else{err.classList.remove(\'hidden\');}
+    let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if(!e || !p) return showError("Email aur Password dono bharo");
+    if(!emailRegex.test(e)) return showError("Sahi email format dalo");
+
+    // Loader
+    document.getElementById(\'btnText\').classList.add(\'hidden\');
+    document.getElementById(\'loader\').classList.remove(\'hidden\');
+
+    setTimeout(()=>{
+        document.getElementById(\'btnText\').classList.remove(\'hidden\');
+        document.getElementById(\'loader\').classList.add(\'hidden\');
+
+        let DB = JSON.parse(localStorage.getItem(\'ca_db\'));
+
+        if(e===\'admin@campus.com\' && p===\'admin123\'){
+            localStorage.setItem(\'role\',\'admin\');
+            DB.audit.push(`Admin login at ${new Date().toLocaleTimeString()}`);
+            localStorage.setItem(\'ca_db\', JSON.stringify(DB));
+            localStorage.removeItem(\'ca_attempts\'); localStorage.removeItem(\'ca_blockUntil\');
+            showSuccess("Admin Login Success! Redirecting...");
+            setTimeout(()=> location.href=\'admin.html\', 600);
+        }
+        else if(e===\'teacher@campus.com\' && p===\'teacher123\'){
+            localStorage.setItem(\'role\',\'teacher\');
+            DB.audit.push(`Teacher login at ${new Date().toLocaleTimeString()}`);
+            localStorage.setItem(\'ca_db\', JSON.stringify(DB));
+            localStorage.removeItem(\'ca_attempts\'); localStorage.removeItem(\'ca_blockUntil\');
+            showSuccess("Teacher Login Success! Redirecting...");
+            setTimeout(()=> location.href=\'teacher.html\', 600);
+        }
+        else if(e===\'student@campus.com\' && p===\'student123\'){
+            localStorage.setItem(\'role\',\'student\');
+            localStorage.setItem(\'studentId\',\'AMAN21CS42\');
+            DB.audit.push(`Student 21CS42 login at ${new Date().toLocaleTimeString()}`);
+            localStorage.setItem(\'ca_db\', JSON.stringify(DB));
+            localStorage.removeItem(\'ca_attempts\'); localStorage.removeItem(\'ca_blockUntil\');
+            showSuccess("Student Login Success! Redirecting...");
+            setTimeout(()=> location.href=\'student.html\', 600);
+        }
+        else{
+            attempts++; localStorage.setItem(\'ca_attempts\', attempts);
+            if(attempts >= 5){
+                blockUntil = Date.now() + 30000; // 30 sec block
+                localStorage.setItem(\'ca_blockUntil\', blockUntil);
+                showError("5 baar galat login. 30 second ke liye block.");
+            } else {
+                showError(`Galat Email ya Password! (${attempts}/5 attempts)`);
+            }
+            // Audit
+            DB.audit.push(`Failed login attempt for ${e} at ${new Date().toLocaleTimeString()}`);
+            localStorage.setItem(\'ca_db\', JSON.stringify(DB));
+            updateAttemptInfo();
+        }
+    }, 500);
 }
 </script>
 </body>

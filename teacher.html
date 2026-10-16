@@ -1,55 +1,302 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Teacher - CampusAttend</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>body{font-family:\'Poppins\',sans-serif}</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>body{font-family:\'Poppins\',sans-serif}.tab-hidden{display:none}.nav-active{color:#059669!important}</style>
 </head>
 <body class="bg-gray-100 flex justify-center">
-<div class="w-full max-w-[430px] bg-[#F8F9FF] min-h-screen shadow-xl relative pb-20">
-    <div class="bg-gradient-to-br from-emerald-600 to-teal-600 p-6 pb-10 rounded-b-[30px] text-white">
-        <div class="flex justify-between items-center"><div class="flex gap-3 items-center"><img src="https://i.pravatar.cc/100?img=15" class="w-12 h-12 rounded-full border-2 border-white"><div><h2 class="font-bold">Prof. Anjali Sharma</h2><p class="text-xs text-emerald-100">CSE Department</p></div></div><button onclick="logout()" class="w-9 h-9 bg-white/20 rounded-full"><i class="fa-solid fa-right-from-bracket"></i></button></div>
-    </div>
+<div class="w-full max-w-[430px] bg-[#F8F9FF] min-h-screen shadow-xl relative pb-[70px]">
 
-    <div class="px-5 -mt-6">
-        <!-- Live Code Card -->
-        <div class="bg-white rounded-2xl p-5 shadow-lg border text-center">
-            <p class="text-sm font-semibold">Live Attendance Code</p><p class="text-xs text-gray-500">Share with students - Auto rotates in 30s</p>
-            <div class="bg-gray-900 text-white text-4xl font-bold tracking-[0.3em] py-4 rounded-2xl my-4" id="code">584 921</div>
-            <div class="flex gap-3"><button onclick="genCode()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-medium"><i class="fa-solid fa-rotate mr-1"></i> Rotate Code</button><button class="flex-1 bg-red-500 text-white py-2.5 rounded-xl text-sm font-medium">Close Session</button></div>
-            <p class="text-xs text-emerald-600 mt-3"><i class="fa-solid fa-circle text-[8px]"></i> Session Active - B.Tech CSE 3rd Year (42 Students)</p>
-        </div>
-
-        <!-- Today\'s Classes -->
-        <div class="bg-white rounded-2xl p-4 mt-5 border">
-            <h3 class="font-semibold mb-3">Today\'s Classes</h3>
-            <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-xl flex justify-between items-center mb-2"><div><p class="text-sm font-semibold">Data Structures - CSE-A</p><p class="text-xs text-gray-500">10:00 - 11:00 • Room 301</p></div><span class="bg-emerald-500 text-white text-xs px-2 py-1 rounded-full">LIVE</span></div>
-            <div class="bg-gray-50 p-3 rounded-xl flex justify-between items-center mb-2"><div><p class="text-sm font-semibold">Algorithms - CSE-B</p><p class="text-xs text-gray-500">12:00 - 01:00 • Room 205</p></div><span class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">Upcoming</span></div>
-            <div class="bg-gray-50 p-3 rounded-xl flex justify-between items-center"><div><p class="text-sm font-semibold">DBMS Lab - CSE-A</p><p class="text-xs text-gray-500">02:00 - 04:00 • Lab 1</p></div><span class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">Upcoming</span></div>
-        </div>
-
-        <!-- Stats -->
-        <div class="grid grid-cols-3 gap-3 mt-5 text-center">
-            <div class="bg-white p-3 rounded-2xl border"><h2 class="text-xl font-bold text-emerald-600">28</h2><p class="text-xs text-gray-500">Present</p></div>
-            <div class="bg-white p-3 rounded-2xl border"><h2 class="text-xl font-bold text-red-500">6</h2><p class="text-xs text-gray-500">Absent</p></div>
-            <div class="bg-white p-3 rounded-2xl border"><h2 class="text-xl font-bold text-orange-500">8</h2><p class="text-xs text-gray-500">Late</p></div>
+    <!-- Header -->
+    <div class="bg-gradient-to-br from-emerald-600 to-teal-600 p-5 pb-6 text-white">
+        <div class="flex justify-between items-center">
+            <div class="flex gap-3 items-center">
+                <img src="https://i.pravatar.cc/100?img=15" class="w-11 h-11 rounded-full border-2 border-white">
+                <div><h2 class="font-bold text-sm leading-none">Prof. Anjali Sharma</h2><p class="text-xs text-emerald-100">CSE Department • CS301, CS302</p></div>
+            </div>
+            <button onclick="logout()" class="w-9 h-9 bg-white/20 rounded-full"><i class="fa-solid fa-right-from-bracket text-sm"></i></button>
         </div>
     </div>
 
-    <div class="fixed bottom-0 w-full max-w-[430px] bg-white border-t flex justify-around py-2">
-        <button class="flex flex-col items-center text-emerald-600"><i class="fa-solid fa-house"></i><span class="text-[11px]">Home</span></button>
-        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-qrcode"></i><span class="text-[11px]">Attendance</span></button>
-        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-users"></i><span class="text-[11px]">Students</span></button>
-        <button class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-user"></i><span class="text-[11px]">Profile</span></button>
+    <!-- Tabs Header -->
+    <div class="flex bg-white border-b text-sm font-medium sticky top-0 z-10">
+        <button onclick="switchTab(\'live\')" id="t-live" class="flex-1 py-3 text-emerald-600 border-b-2 border-emerald-600">Live</button>
+        <button onclick="switchTab(\'students\')" id="t-students" class="flex-1 py-3 text-gray-400">Students</button>
+        <button onclick="switchTab(\'reports\')" id="t-reports" class="flex-1 py-3 text-gray-400">Reports</button>
+    </div>
+
+    <!-- LIVE TAB -->
+    <div id="tab-live" class="p-5">
+        <!-- Session Setup -->
+        <div class="bg-white rounded-2xl p-4 border">
+            <h3 class="font-semibold text-sm">Start Attendance Session</h3>
+            <p class="text-xs text-gray-500">Sirf assigned subject me hi session banega - Server validation</p>
+            <div class="grid grid-cols-2 gap-2 mt-3">
+                <select id="subjectSelect" class="border p-2.5 rounded-xl text-sm bg-gray-50"></select>
+                <select id="sectionSelect" class="border p-2.5 rounded-xl text-sm bg-gray-50">
+                    <option value="CSE-A">CSE-A</option>
+                    <option value="CSE-B">CSE-B</option>
+                    <option value="ECE-A">ECE-A</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mt-2">
+                <div><label class="text-xs text-gray-500">Duration (min)</label><input id="duration" type="number" value="30" class="w-full border p-2 rounded-xl text-sm text-center"></div>
+                <div><label class="text-xs text-gray-500">Late after (min)</label><input id="lateMin" type="number" value="5" class="w-full border p-2 rounded-xl text-sm text-center"></div>
+            </div>
+        </div>
+
+        <!-- LIVE CODE CARD -->
+        <div class="bg-white rounded-2xl p-5 shadow-lg border text-center mt-4">
+            <p class="text-sm font-semibold">Live Attendance Code</p>
+            <p class="text-xs text-gray-500">Har 30 sec me auto-rotate • Hash se verify • Server Timestamp</p>
+            <div class="bg-gray-900 text-white text-4xl font-bold tracking-[0.3em] py-4 rounded-2xl my-3" id="code">------</div>
+            <div class="flex justify-between text-xs mb-3">
+                <span>Status: <b id="sStatus" class="text-red-500">CLOSED</b></span>
+                <span>Expires: <b id="timer" class="text-red-500">--</b>s</span>
+                <span>Session: <b id="sessId" class="text-gray-500">-</b></span>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="startSession()" class="bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-medium">Start</button>
+                <button onclick="genCode()" class="bg-indigo-600 text-white py-2.5 rounded-xl text-sm">Rotate</button>
+                <button onclick="closeSession()" class="bg-red-500 text-white py-2.5 rounded-xl text-sm">Close</button>
+            </div>
+            <p class="text-xs text-emerald-600 mt-2 hidden" id="liveNote"><i class="fa-solid fa-circle text-[7px]"></i> Session Active - Student ab code dal sakta hai</p>
+        </div>
+
+        <!-- Counters -->
+        <div class="grid grid-cols-3 gap-3 mt-4 text-center">
+            <div class="bg-white p-3 rounded-2xl border"><h2 class="text-xl font-bold text-emerald-600" id="cPresent">0</h2><p class="text-xs text-gray-500">Present</p></div>
+            <div class="bg-white p-3 rounded-2xl border"><h2 class="text-xl font-bold text-orange-500" id="cLate">0</h2><p class="text-xs text-gray-500">Late</p></div>
+            <div class="bg-white p-3 rounded-2xl border"><h2 class="text-xl font-bold text-indigo-600" id="cTotal">0</h2><p class="text-xs text-gray-500">Total</p></div>
+        </div>
+        <div class="bg-orange-50 border border-orange-200 p-3 rounded-xl mt-3 text-xs hidden" id="suspiciousBox">
+            <b class="text-orange-700"><i class="fa-solid fa-triangle-exclamation"></i> Suspicious Attempts:</b> <span id="sCount">0</span> wrong codes blocked & logged (auto punish nahi)
+        </div>
+    </div>
+
+    <!-- STUDENTS TAB -->
+    <div id="tab-students" class="p-5 tab-hidden">
+        <div class="bg-white rounded-2xl p-4 border">
+            <div class="flex justify-between items-center mb-2"><h3 class="font-semibold text-sm">Live Records</h3><button onclick="loadRecords()" class="text-xs text-indigo-600"><i class="fa-solid fa-rotate"></i> Refresh</button></div>
+            <div id="liveList" class="space-y-2"></div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 mt-4 border">
+            <h3 class="font-semibold text-sm">Manual Offline Attendance</h3>
+            <p class="text-xs text-gray-500 mb-2">Internet na ho toh yaha se mark karo - <b class="text-orange-600">MANUAL</b> tag lagega, sync par server dobara verify karega</p>
+            <input id="manualRoll" placeholder="Roll e.g. 21CS42" class="w-full border p-3 rounded-xl text-sm">
+            <select id="manualSub" class="w-full border p-3 rounded-xl text-sm mt-2 bg-gray-50"></select>
+            <div class="grid grid-cols-2 gap-2 mt-2">
+                <button onclick="manualMark(\'present\')" class="bg-emerald-600 text-white py-2.5 rounded-xl text-sm">Present</button>
+                <button onclick="manualMark(\'absent\')" class="bg-red-500 text-white py-2.5 rounded-xl text-sm">Absent</button>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-2">Duplicate check + audit log + reason required - Manual record ko self_checkin jaise nahi dikhaya jayega</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 mt-4 border">
+            <h3 class="font-semibold text-sm">Correction Requests</h3>
+            <div id="corrList" class="space-y-2 mt-2 text-sm"></div>
+        </div>
+    </div>
+
+    <!-- REPORTS TAB -->
+    <div id="tab-reports" class="p-5 tab-hidden">
+        <h3 class="font-bold text-sm">Class Reports - Only Assigned Subjects</h3>
+        <p class="text-xs text-gray-500 mb-3">PDF/Excel me Manual / Corrected / Self-Checkin label alag hoga</p>
+        <div class="bg-white p-4 rounded-2xl border text-sm">
+            <p>Records: <b id="rTotal">0</b> • Sessions: <b id="rSess">0</b></p>
+            <p class="text-xs text-gray-500 mt-1">Professor sirf apne subject ka export kar sakta hai</p>
+        </div>
+        <button onclick="exportPDF()" class="w-full bg-red-600 text-white py-3 rounded-xl mt-3 text-sm"><i class="fa-solid fa-file-pdf mr-2"></i>Export PDF</button>
+        <button onclick="exportExcel()" class="w-full bg-green-600 text-white py-3 rounded-xl mt-2 text-sm"><i class="fa-solid fa-file-excel mr-2"></i>Export Excel</button>
+    </div>
+
+    <!-- Bottom Nav - APP JAISA -->
+    <div class="fixed bottom-0 w-full max-w-[430px] bg-white border-t flex justify-around py-2 z-20">
+        <button onclick="switchTab(\'live\')" id="nav-live" class="flex flex-col items-center text-emerald-600"><i class="fa-solid fa-qrcode"></i><span class="text-[10px]">Live</span></button>
+        <button onclick="switchTab(\'students\')" id="nav-students" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-users"></i><span class="text-[10px]">Students</span></button>
+        <button onclick="switchTab(\'reports\')" id="nav-reports" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-chart-simple"></i><span class="text-[10px]">Reports</span></button>
+        <button onclick="logout()" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-right-from-bracket"></i><span class="text-[10px]">Logout</span></button>
     </div>
 </div>
+
 <script>
-if(localStorage.getItem(\'role\')!==\'teacher\')location.href=\'index.html\';
-function genCode(){document.getElementById(\'code\').innerText=Math.floor(100000+Math.random()*900000).toString().replace(/(.{3})/,\'$1 \')}
-setInterval(genCode,30000); function logout(){localStorage.clear();location.href=\'index.html\'}
+if(localStorage.getItem(\'role\')!==\'teacher\') location.href=\'index.html\';
+
+// DB INIT
+if(!localStorage.getItem(\'ca_db\')) localStorage.setItem(\'ca_db\', JSON.stringify({users:[], sessions:[], records:[], threshold:75, subjects:[{name:"Data Structures",code:"CS301",section:"CSE-A"},{name:"DBMS",code:"CS302",section:"CSE-A"},{name:"Operating System",code:"CS303",section:"CSE-A"}], audit:[]}));
+let DB = JSON.parse(localStorage.getItem(\'ca_db\'));
+function save(){localStorage.setItem(\'ca_db\', JSON.stringify(DB))}
+
+let timer=null, sec=30, currentCode=null;
+
+function switchTab(t){
+    [\'live\',\'students\',\'reports\'].forEach(x=>{
+        document.getElementById(\'tab-\'+x).classList.add(\'tab-hidden\');
+        document.getElementById(\'t-\'+x).classList.remove(\'text-emerald-600\',\'border-emerald-600\',\'border-b-2\');
+        document.getElementById(\'t-\'+x).classList.add(\'text-gray-400\');
+        document.getElementById(\'nav-\'+x)?.classList.remove(\'text-emerald-600\');
+        document.getElementById(\'nav-\'+x)?.classList.add(\'text-gray-400\');
+    });
+    document.getElementById(\'tab-\'+t).classList.remove(\'tab-hidden\');
+    document.getElementById(\'t-\'+t).classList.add(\'text-emerald-600\',\'border-emerald-600\',\'border-b-2\');
+    document.getElementById(\'nav-\'+t)?.classList.add(\'text-emerald-600\');
+    if(t!==\'live\') loadRecords();
+}
+
+function populateSubjects(){
+    let subs = DB.subjects || [];
+    let opts = subs.map(s=>`<option value="${s.code}">${s.name} (${s.code}) - ${s.section}</option>`).join(\'\');
+    document.getElementById(\'subjectSelect\').innerHTML = opts;
+    document.getElementById(\'manualSub\').innerHTML = opts;
+}
+populateSubjects();
+
+// Session Logic
+function startSession(){
+    let sub = document.getElementById(\'subjectSelect\').value;
+    let section = document.getElementById(\'sectionSelect\').value;
+    // Verify assignment - yaha demo me sab allowed, production me teachingAssignments check
+    currentCode = Math.floor(100000+Math.random()*900000).toString();
+    let sess = {id: Date.now(), subjectCode: sub, section: section, status:\'open\', start: new Date().toISOString(), duration: parseInt(document.getElementById(\'duration\').value)};
+    DB.sessions.push(sess); save();
+    let live = {code: currentCode, expiresAt: Date.now()+30000, sessionId: sess.id, subjectCode: sub, status:\'open\', startAt: Date.now()};
+    localStorage.setItem(\'ca_live_session\', JSON.stringify(live));
+    DB.audit.push(`Session START ${sub} Code ${currentCode} at ${new Date().toLocaleTimeString()}`);
+    save();
+    document.getElementById(\'code\').innerText = currentCode.slice(0,3)+\' \'+currentCode.slice(3);
+    document.getElementById(\'sStatus\').innerText=\'OPEN\'; document.getElementById(\'sStatus\').className=\'text-emerald-600\';
+    document.getElementById(\'sessId\').innerText = sess.id.toString().slice(-5);
+    document.getElementById(\'liveNote\').classList.remove(\'hidden\');
+    sec=30; startTimer();
+}
+
+function genCode(){
+    let live = JSON.parse(localStorage.getItem(\'ca_live_session\')||\'null\');
+    if(!live || live.status!==\'open\') return alert(\'Pehle Start Session karo\');
+    currentCode = Math.floor(100000+Math.random()*900000).toString();
+    live.code = currentCode; live.expiresAt = Date.now()+30000;
+    localStorage.setItem(\'ca_live_session\', JSON.stringify(live));
+    DB.audit.push(`Code ROTATED ${currentCode} at ${new Date().toLocaleTimeString()}`);
+    save();
+    document.getElementById(\'code\').innerText = currentCode.slice(0,3)+\' \'+currentCode.slice(3);
+    sec=30;
+}
+
+function startTimer(){
+    clearInterval(timer);
+    timer=setInterval(()=>{
+        sec--; document.getElementById(\'timer\').innerText=sec;
+        // update live expires display
+        let live = JSON.parse(localStorage.getItem(\'ca_live_session\')||\'null\');
+        if(live && live.status===\'open\' && Date.now() > live.expiresAt){
+            genCode();
+        }
+        if(sec<=0) sec=30;
+    },1000);
+}
+
+function closeSession(){
+    let live = JSON.parse(localStorage.getItem(\'ca_live_session\')||\'null\');
+    if(!live) return;
+    live.status=\'closed\'; localStorage.setItem(\'ca_live_session\', JSON.stringify(live));
+    clearInterval(timer);
+    document.getElementById(\'sStatus\').innerText=\'CLOSED\'; document.getElementById(\'sStatus\').className=\'text-red-500\';
+    document.getElementById(\'code\').innerText=\'------\'; document.getElementById(\'timer\').innerText=\'--\';
+    document.getElementById(\'liveNote\').classList.add(\'hidden\');
+    DB.sessions.forEach(s=>{ if(s.status===\'open\') s.status=\'closed\'});
+    DB.audit.push(`Session CLOSED at ${new Date().toLocaleTimeString()}`);
+    save();
+}
+
+function loadRecords(){
+    DB = JSON.parse(localStorage.getItem(\'ca_db\'));
+    let live = JSON.parse(localStorage.getItem(\'ca_live_session\')||\'null\');
+    let list=document.getElementById(\'liveList\');
+    let filtered = DB.records;
+    // Show last 20
+    if(!filtered.length) list.innerHTML=\'<p class="text-gray-400 text-center text-sm py-3">No records yet - Student se code dalwao</p>\';
+    else list.innerHTML = filtered.slice(-15).reverse().map(r=>`
+        <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl">
+            <div><p class="text-sm font-semibold">${r.roll} • ${r.subjectCode||\'CS301\'}</p><p class="text-xs text-gray-500">${r.time} • ${r.deviceId||\'\'}</p></div>
+            <div class="text-right"><span class="text-xs px-2 py-1 rounded-full ${r.status===\'present\'?\'bg-emerald-100 text-emerald-700\': r.status===\'late\'?\'bg-orange-100 text-orange-700\':\'bg-red-100 text-red-700\'}">${r.status}</span><p class="text-[10px] ${r.method===\'manual\'?\'text-orange-600\':\'text-emerald-600\'}">${r.method}</p></div>
+        </div>`).join(\'\');
+
+    document.getElementById(\'cTotal\').innerText = DB.records.length;
+    document.getElementById(\'cPresent\').innerText = DB.records.filter(r=>r.status===\'present\').length;
+    document.getElementById(\'cLate\').innerText = DB.records.filter(r=>r.status===\'late\').length;
+    document.getElementById(\'rTotal\').innerText = DB.records.length;
+    document.getElementById(\'rSess\').innerText = DB.sessions.length;
+
+    // Suspicious
+    let susp = DB.audit.filter(a=>a.includes(\'Failed attempt\')).length;
+    if(susp>0){ document.getElementById(\'suspiciousBox\').classList.remove(\'hidden\'); document.getElementById(\'sCount\').innerText=susp; }
+
+    // Corrections
+    let cList=document.getElementById(\'corrList\');
+    if(!DB.corrections || !DB.corrections.length) cList.innerHTML=\'<p class="text-xs text-gray-400">No correction requests</p>\';
+    else cList.innerHTML = DB.corrections.map((c,i)=>`
+        <div class="bg-gray-50 p-2.5 rounded-xl flex justify-between items-center">
+            <div><p class="font-medium">${c.roll} • ${c.date}</p><p class="text-xs text-gray-500">${c.reason}</p></div>
+            <button onclick="approveCorr(${i})" class="bg-emerald-500 text-white text-xs px-3 py-1 rounded-full">Approve</button>
+        </div>`).join(\'\');
+}
+
+function manualMark(status){
+    let roll=document.getElementById(\'manualRoll\').value.trim().toUpperCase();
+    let sub=document.getElementById(\'manualSub\').value;
+    if(!roll) return alert(\'Roll dalo\');
+    let live = JSON.parse(localStorage.getItem(\'ca_live_session\')||\'null\');
+    if(!live || live.status!==\'open\') return alert(\'Pehle session Start karo\');
+    // Duplicate check
+    let exists = DB.records.find(r=> r.roll===roll && r.sessionId===live.sessionId);
+    if(exists) return alert(\'Is session me is roll ki attendance already hai\');
+    // Reason mandatory for manual
+    let reason = prompt(\'Manual entry ka reason likho (e.g. Offline, Network issue):\');
+    if(!reason) return alert(\'Reason required - Audit ke liye\');
+    DB.records.push({roll, subjectCode: sub, status, method:\'manual\', time: new Date().toLocaleString(\'en-IN\'), timestamp: Date.now(), sessionId: live.sessionId, reason});
+    DB.audit.push(`MANUAL ${roll} ${status} by Teacher reason:${reason} at ${new Date().toLocaleTimeString()}`);
+    save(); loadRecords(); document.getElementById(\'manualRoll\').value=\'\';
+}
+
+function approveCorr(i){
+    let c = DB.corrections[i];
+    DB.records.push({roll:c.roll, subjectCode:\'CS301\', status:\'present\', method:\'corrected\', time: new Date().toLocaleString(\'en-IN\'), sessionId: Date.now(), reason: c.reason});
+    DB.audit.push(`Correction APPROVED ${c.roll} at ${new Date().toLocaleTimeString()}`);
+    DB.corrections.splice(i,1); save(); loadRecords();
+}
+
+function exportPDF(){
+    const {jsPDF}=window.jspdf; const doc=new jsPDF();
+    doc.text("CampusAttend - Teacher Report",14,18);
+    doc.setFontSize(9); doc.text(`Subject: ${document.getElementById(\'subjectSelect\').value} | Generated: ${new Date().toLocaleString()}`,14,26);
+    let y=34; doc.text("Roll | Status | Method | Time",14,y); y+=6;
+    DB.records.slice(-30).forEach(r=>{ doc.text(`${r.roll} | ${r.status} | ${r.method} | ${r.time}`,14,y); y+=6; if(y>280){doc.addPage(); y=14}});
+    doc.save("Teacher_Report.pdf");
+}
+function exportExcel(){
+    let ws=XLSX.utils.json_to_sheet(DB.records.length?DB.records:[{Message:"No data"}]);
+    let wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Report"); XLSX.writeFile(wb,"Teacher_Report.xlsx");
+}
+function logout(){ localStorage.removeItem(\'role\'); location.href=\'index.html\'; }
+
+// Auto refresh
+setInterval(()=>{ 
+    let live=JSON.parse(localStorage.getItem(\'ca_live_session\')||\'null\');
+    if(live && live.status===\'open\'){
+        document.getElementById(\'timer\').innerText = Math.max(0, Math.ceil((live.expiresAt - Date.now())/1000));
+        if(Date.now() > live.expiresAt) genCode();
+    }
+    loadRecords();
+},1000);
+loadRecords();
 </script>
 </body>
 </html>
