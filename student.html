@@ -1,321 +1,69 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Student - CampusAttend</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>body{font-family:\'Poppins\',sans-serif}.nav-active{color:#4F46E5!important}.tab-hidden{display:none}</style>
-</head>
-<body class="bg-gray-100 flex justify-center">
-<div class="w-full max-w-[430px] bg-[#F8F9FF] min-h-screen shadow-xl relative pb-[70px]">
-
-    <!-- Header -->
-    <div class="bg-white p-4 flex justify-between items-center border-b sticky top-0 z-20">
-        <div class="flex gap-3 items-center">
-            <img src="https://i.pravatar.cc/100?img=8" class="w-10 h-10 rounded-full border">
-            <div>
-                <h2 class="font-bold text-sm leading-none">Aman Kumar</h2>
-                <p class="text-xs text-gray-500">21CS42 • B.Tech CSE • 3rd Year</p>
-            </div>
-        </div>
-        <button onclick="logout()" class="w-9 h-9 bg-red-50 text-red-500 rounded-full"><i class="fa-solid fa-right-from-bracket text-sm"></i></button>
-    </div>
-
-    <!-- HOME TAB -->
-    <div id="tab-home" class="p-5">
-        <!-- Overall Card -->
-        <div class="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-[24px] p-5 text-white flex justify-between items-center shadow-lg">
-            <div>
-                <p class="text-xs opacity-80">Overall Attendance</p>
-                <h1 class="text-4xl font-bold mt-1" id="overall">0%</h1>
-                <p class="text-xs opacity-80 mt-1" id="overallSub">0 Present / 0 Conducted</p>
-                <p class="text-[11px] bg-white/20 inline-block px-2 py-1 rounded-full mt-2" id="statusBadge">No Data</p>
-            </div>
-            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center border-[4px] border-white">
-                <span class="font-bold text-lg" id="circle">0%</span>
-            </div>
-        </div>
-
-        <!-- Warning -->
-        <div id="warning" class="hidden bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded-xl mt-3 flex gap-2">
-            <i class="fa-solid fa-triangle-exclamation mt-0.5"></i><span id="warningText"></span>
-        </div>
-
-        <!-- Mark Attendance Card - MAIN FEATURE -->
-        <div class="bg-white rounded-2xl p-5 mt-5 border shadow-sm">
-            <h3 class="font-semibold text-sm"><i class="fa-solid fa-qrcode text-indigo-600 mr-2"></i>Mark Attendance</h3>
-            <p class="text-xs text-gray-500 mb-3">Teacher ke screen wala LIVE code enter karo</p>
-            
-            <div class="flex justify-between text-[11px] text-gray-500 mb-2">
-                <span>Session: <b id="sessionStatus" class="text-red-500">CLOSED</b></span>
-                <span>Expires in: <b id="codeTimer">--</b>s</span>
-            </div>
-
-            <input id="attCode" placeholder="000 000" maxlength="6" inputmode="numeric" class="w-full text-center text-3xl tracking-[0.4em] font-bold py-3.5 border-2 border-dashed rounded-xl outline-none focus:border-indigo-500 bg-gray-50">
-            <button onclick="mark()" class="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-semibold mt-3 shadow-md hover:bg-indigo-700">Submit Attendance</button>
-            <p id="msg" class="text-center text-sm mt-3 hidden p-2 rounded-lg"></p>
-            <p class="text-[11px] text-gray-400 text-center mt-2">Code har 30 sec me badalta hai • Ek session me ek hi baar mark hoga</p>
-        </div>
-
-        <!-- Subject Wise -->
-        <h3 class="font-semibold text-sm mt-5 mb-3">Subject-wise Attendance</h3>
-        <div id="subjectList" class="space-y-3"></div>
-
-        <!-- Forecast -->
-        <div class="bg-white rounded-2xl p-4 mt-4 border">
-            <h3 class="font-semibold text-sm mb-1"><i class="fa-solid fa-chart-line text-indigo-600 mr-1"></i> Forecast</h3>
-            <p id="forecast" class="text-xs text-gray-600 leading-relaxed"></p>
-        </div>
-    </div>
-
-    <!-- HISTORY TAB -->
-    <div id="tab-history" class="p-5 tab-hidden">
-        <h3 class="font-bold">Attendance History</h3>
-        <p class="text-xs text-gray-500 mb-3">Date-wise pura record - Manual / SelfCheckin tag ke saath</p>
-        <div id="history" class="space-y-2"></div>
-    </div>
-
-    <!-- ALERTS TAB -->
-    <div id="tab-alerts" class="p-5 tab-hidden">
-        <h3 class="font-bold">Notifications & Warnings</h3>
-        <div id="alertList" class="space-y-3 mt-3"></div>
-        <div class="bg-white p-4 rounded-2xl border mt-4">
-            <h4 class="font-semibold text-sm mb-2">Request Correction</h4>
-            <input id="corrDate" type="date" class="w-full border p-2.5 rounded-xl text-sm">
-            <input id="corrReason" placeholder="Reason e.g. Code error, present tha" class="w-full border p-2.5 rounded-xl text-sm mt-2">
-            <button onclick="sendCorrection()" class="w-full bg-orange-500 text-white py-2.5 rounded-xl mt-2 text-sm font-medium">Send Request to Teacher</button>
-            <p id="corrMsg" class="text-xs text-center mt-2 hidden text-emerald-600"></p>
-        </div>
-    </div>
-
-    <!-- PROFILE TAB -->
-    <div id="tab-profile" class="p-5 tab-hidden">
-        <div class="bg-white rounded-2xl p-5 border text-center">
-            <img src="https://i.pravatar.cc/100?img=8" class="w-20 h-20 rounded-full mx-auto border-4 border-indigo-100">
-            <h3 class="font-bold mt-2">Aman Kumar</h3>
-            <p class="text-xs text-gray-500">aman.21cs42@campus.com</p>
-            <div class="grid grid-cols-2 gap-3 text-left mt-4 text-sm">
-                <div class="bg-gray-50 p-3 rounded-xl"><p class="text-xs text-gray-500">Roll Number</p><p class="font-semibold">21CS42</p></div>
-                <div class="bg-gray-50 p-3 rounded-xl"><p class="text-xs text-gray-500">Section</p><p class="font-semibold">CSE-A</p></div>
-                <div class="bg-gray-50 p-3 rounded-xl"><p class="text-xs text-gray-500">Semester</p><p class="font-semibold">5th Sem</p></div>
-                <div class="bg-gray-50 p-3 rounded-xl"><p class="text-xs text-gray-500">Device</p><p class="font-semibold text-xs" id="deviceId">Checking...</p></div>
-            </div>
-            <button onclick="logout()" class="w-full bg-red-500 text-white py-3 rounded-xl mt-5">Logout</button>
-        </div>
-    </div>
-
-    <!-- Bottom Nav - APP JAISA -->
-    <div class="fixed bottom-0 w-full max-w-[430px] bg-white border-t flex justify-around py-2 z-20">
-        <button onclick="switchTab(\'home\')" id="nav-home" class="nav-active flex flex-col items-center text-indigo-600"><i class="fa-solid fa-house"></i><span class="text-[10px]">Home</span></button>
-        <button onclick="switchTab(\'history\')" id="nav-history" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-calendar-check"></i><span class="text-[10px]">History</span></button>
-        <button onclick="switchTab(\'alerts\')" id="nav-alerts" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-bell"></i><span class="text-[10px]">Alerts</span></button>
-        <button onclick="switchTab(\'profile\')" id="nav-profile" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-user"></i><span class="text-[10px]">Profile</span></button>
-    </div>
-</div>
-
-<script>
-// ===== AUTH CHECK - DEMO ONLY =====
-if(localStorage.getItem(\'role\')!==\'student\') location.href=\'index.html\';
-
-// ===== DB INIT =====
-if(!localStorage.getItem(\'ca_db\')) localStorage.setItem(\'ca_db\', JSON.stringify({users:[], sessions:[], records:[], threshold:75, subjects:[{name:"Data Structures",code:"CS301"},{name:"DBMS",code:"CS302"},{name:"Operating System",code:"CS303"}], audit:[]}));
-if(!localStorage.getItem(\'ca_device_id\')) localStorage.setItem(\'ca_device_id\', \'DEV-\'+Math.random().toString(36).substr(2,9).toUpperCase());
-document.getElementById(\'deviceId\').innerText = localStorage.getItem(\'ca_device_id\');
-
-let DB = JSON.parse(localStorage.getItem(\'ca_db\'));
-const MY_ROLL = "21CS42";
-const MY_ID = localStorage.getItem(\'studentId\') || "AMAN21CS42";
-
-function save(){ localStorage.setItem(\'ca_db\', JSON.stringify(DB)); }
-
-// Tab Switch
-function switchTab(t){
-    [\'home\',\'history\',\'alerts\',\'profile\'].forEach(x=>{
-        document.getElementById(\'tab-\'+x).classList.add(\'tab-hidden\');
-        document.getElementById(\'nav-\'+x).classList.remove(\'nav-active\',\'text-indigo-600\');
-        document.getElementById(\'nav-\'+x).classList.add(\'text-gray-400\');
-    });
-    document.getElementById(\'tab-\'+t).classList.remove(\'tab-hidden\');
-    document.getElementById(\'nav-\'+t).classList.add(\'nav-active\',\'text-indigo-600\');
-    if(t===\'history\' || t===\'home\') renderAll();
-}
-
-// ===== CORE LOGIC =====
-function getLiveSession(){
-    return JSON.parse(localStorage.getItem(\'ca_live_session\') || \'null\');
-}
-
-function renderAll(){
-    DB = JSON.parse(localStorage.getItem(\'ca_db\'));
-    let live = getLiveSession();
-    let statusEl = document.getElementById(\'sessionStatus\');
-    let timerEl = document.getElementById(\'codeTimer\');
-    if(live && live.status===\'open\' && Date.now() < live.expiresAt){
-        statusEl.innerText = "OPEN • "+live.sessionId.toString().slice(-4);
-        statusEl.className = "text-emerald-600";
-        timerEl.innerText = Math.max(0, Math.ceil((live.expiresAt - Date.now())/1000));
-    } else if(live && live.status===\'open\'){
-        statusEl.innerText = "EXPIRED";
-        statusEl.className = "text-orange-500";
-        timerEl.innerText = "0";
-    } else {
-        statusEl.innerText = "CLOSED";
-        statusEl.className = "text-red-500";
-        timerEl.innerText = "--";
-    }
-
-    // Stats
-    let conducted = DB.sessions.length || 5; // fallback demo
-    let myRecords = DB.records.filter(r=> r.roll===MY_ROLL || r.studentId===MY_ID);
-    let present = myRecords.filter(r=> r.status===\'present\').length;
-    // Demo ke liye agar koi record nahi toh show 0
-    let late = myRecords.filter(r=> r.status===\'late\').length;
-    let total = myRecords.length;
-    // Agar real conducted se zyada nahi hai toh conducted dikhao
-    if(total===0){ present=0; conducted = DB.sessions.length || 0; }
-    
-    let perc = conducted===0 ? 0 : Math.round((present / conducted)*100);
-    if(total>0 && conducted < total) conducted = total; // sync
-
-    document.getElementById(\'overall\').innerText = perc + "%";
-    document.getElementById(\'circle\').innerText = perc + "%";
-    document.getElementById(\'overallSub\').innerText = `${present} Present / ${conducted} Conducted` + (late? ` • ${late} Late`:\'\');
-
-    let badge = document.getElementById(\'statusBadge\');
-    if(perc>=75){ badge.innerText="Safe ✓"; badge.className="text-[11px] bg-emerald-500 px-2 py-1 rounded-full"; }
-    else if(perc===0 && conducted===0){ badge.innerText="No classes yet"; badge.className="text-[11px] bg-white/20 px-2 py-1 rounded-full"; }
-    else{ badge.innerText="Below 75%"; badge.className="text-[11px] bg-red-500 px-2 py-1 rounded-full"; }
-
-    // Warning
-    let warn = document.getElementById(\'warning\');
-    if(perc < DB.threshold && conducted>0){
-        warn.classList.remove(\'hidden\');
-        document.getElementById(\'warningText\').innerText = `Attendance ${perc}% hai - Threshold ${DB.threshold}% se kam hai! Regular class attend karo.`;
-    } else warn.classList.add(\'hidden\');
-
-    // Subject List
-    let subEl = document.getElementById(\'subjectList\');
-    let subjects = DB.subjects || [];
-    subEl.innerHTML = subjects.map(s=>{
-        // per subject fake calc
-        let sRec = myRecords.filter(r=> r.subjectCode===s.code);
-        let sPresent = sRec.filter(r=> r.status===\'present\').length || Math.floor(Math.random()*5)+2; // demo variation if no data
-        let sTotal = sRec.length || 7;
-        let sPerc = Math.round((sPresent/sTotal)*100);
-        // agar real data hai toh real dikhao
-        if(sRec.length>0){ sPerc = Math.round((sPresent/sRec.length)*100); sTotal=sRec.length; }
-        let color = sPerc>=75?\'emerald\':\'red\';
-        return `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center">
-            <div><p class="text-sm font-semibold">${s.name}</p><p class="text-xs text-gray-500">${s.code} • ${sPresent}/${sTotal} Present</p>
-            <div class="w-28 h-1.5 bg-gray-100 rounded-full mt-1.5"><div class="h-1.5 bg-${color}-500 rounded-full" style="width:${sPerc}%"></div></div></div>
-            <span class="text-${color}-600 font-bold">${sPerc}%</span></div>`;
-    }).join(\'\');
-
-    // History
-    let hEl = document.getElementById(\'history\');
-    if(myRecords.length===0) hEl.innerHTML = `<p class="text-center text-gray-400 text-sm py-8">Abhi tak koi attendance nahi lagi<br><span class="text-xs">Teacher se code lekar mark karo</span></p>`;
-    else hEl.innerHTML = myRecords.slice().reverse().map(r=>`
-        <div class="bg-white p-3 rounded-xl border flex justify-between items-center">
-            <div><p class="text-sm font-semibold">${r.subjectCode || \'CS301\'} • ${r.status.toUpperCase()}</p><p class="text-xs text-gray-500">${r.time} • ${r.method}</p></div>
-            <span class="text-xs px-2 py-1 rounded-full ${r.status===\'present\'?\'bg-emerald-100 text-emerald-600\': r.status===\'late\'?\'bg-orange-100 text-orange-600\':\'bg-red-100 text-red-600\'}">${r.status}</span>
-        </div>`).join(\'\');
-
-    // Alerts
-    document.getElementById(\'alertList\').innerHTML = myRecords.length? myRecords.slice(-3).reverse().map(r=>`<div class="bg-white p-3 rounded-xl border text-sm">✅ Attendance marked <b>${r.status}</b> at ${r.time}</div>`).join(\'\') : \'<p class="text-sm text-gray-400">No alerts yet</p>\';
-
-    // Forecast
-    let thresh = parseInt(DB.threshold) || 75;
-    let need = 0;
-    if(perc < thresh && conducted>0){
-        need = Math.ceil((thresh*conducted - 100*present)/(100-thresh));
-        if(need<0) need=0;
-        document.getElementById(\'forecast\').innerText = `75% tak pahuchne ke liye agle ${need} classes lagatar attend karni hogi. (Assumption: koi class miss nahi hogi)`;
-    } else if(conducted===0) document.getElementById(\'forecast\').innerText = `Abhi koi class conduct nahi hui hai.`;
-    else document.getElementById(\'forecast\').innerText = `Badhai ho! Aap ${thresh}% se upar ho. Aise hi maintain rakho.`;
-
-}
-
-// ===== MARK ATTENDANCE - PRODUCTION VALIDATION =====
-function mark(){
-    let code = document.getElementById(\'attCode\').value.trim();
-    let msg = document.getElementById(\'msg\');
-    msg.classList.remove(\'hidden\');
-
-    if(code.length!==6 || isNaN(code)){
-        msg.innerText="❌ 6 digit ka code dalo";
-        msg.className="text-center text-sm mt-3 p-2 rounded-lg bg-red-50 text-red-600";
-        return;
-    }
-
-    let live = getLiveSession();
-    if(!live || live.status!==\'open\'){
-        msg.innerText="❌ Koi live session open nahi hai. Teacher se session start karwao.";
-        msg.className="text-center text-sm mt-3 p-2 rounded-lg bg-red-50 text-red-600";
-        return;
-    }
-    if(Date.now() > live.expiresAt){
-        msg.innerText="❌ Code expire ho gaya! Teacher se naya code lo (har 30 sec me badalta hai)";
-        msg.className="text-center text-sm mt-3 p-2 rounded-lg bg-orange-50 text-orange-600";
-        return;
-    }
-    if(code !== live.code){
-        // Audit log
-        DB.audit.push(`Failed attempt Roll ${MY_ROLL} wrong code ${code} at ${new Date().toLocaleTimeString()}`);
-        save();
-        msg.innerText="❌ Galat code! Teacher ke screen wala code exactly dalo.";
-        msg.className="text-center text-sm mt-3 p-2 rounded-lg bg-red-50 text-red-600";
-        return;
-    }
-
-    // Duplicate check - One record per student per session
-    let exists = DB.records.find(r=> (r.roll===MY_ROLL || r.studentId===MY_ID) && r.sessionId===live.sessionId);
-    if(exists){
-        msg.innerText="⚠️ Is session me attendance already mark ho chuki hai!";
-        msg.className="text-center text-sm mt-3 p-2 rounded-lg bg-yellow-50 text-yellow-700";
-        return;
-    }
-
-    // Device check (mock)
-    let deviceId = localStorage.getItem(\'ca_device_id\');
-
-    // Late logic
-    let isLate = (live.expiresAt - Date.now()) < 10000; // last 10 sec me late
-    let status = isLate ? "late" : "present";
-
-    DB.records.push({
-        roll: MY_ROLL,
-        studentId: MY_ID,
-        sessionId: live.sessionId,
-        subjectCode: live.subjectCode || "CS301",
-        status: status,
-        method: "self_checkin",
-        deviceId: deviceId,
-        time: new Date().toLocaleString(\'en-IN\'),
-        timestamp: Date.now()
-    });
-    DB.audit.push(`Attendance marked ${MY_ROLL} ${status} at ${new Date().toLocaleTimeString()}`);
-    save();
-    msg.innerText = isLate ? "✅ Late Attendance Marked!" : "✅ Attendance Marked Successfully!";
-    msg.className="text-center text-sm mt-3 p-2 rounded-lg bg-emerald-50 text-emerald-700 font-medium";
-    document.getElementById(\'attCode\').value="";
-    renderAll();
-}
-
-function sendCorrection(){
-    let d=document.getElementById(\'corrDate\').value, r=document.getElementById(\'corrReason\').value;
-    if(!d||!r) return alert(\'Date aur Reason dono bharo\');
-    let m=document.getElementById(\'corrMsg\'); m.classList.remove(\'hidden\'); m.innerText="✅ Request teacher ko bhej di gayi hai (Demo - Local me saved)";
-    if(!DB.corrections) DB.corrections=[]; DB.corrections.push({roll:MY_ROLL,date:d,reason:r,time:new Date().toLocaleString()}); save();
-}
-
-function logout(){ localStorage.removeItem(\'role\'); location.href=\'index.html\'; }
-
-// Auto refresh timer
-setInterval(renderAll, 1000);
-renderAll();
-</script>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#6c5ce7"><title>CampusAttend</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>
+:root{--bg:#f4f2ff;--card:#fff;--tx:#1e1b3a;--mu:#7a7899;--bd:#e8e5fa;--pr:#6c5ce7;--ok:#10b981;--okb:#d1fae5;--er:#ef4444;--erb:#fee2e2;--wa:#f59e0b;--wab:#fef3c7;--sh:0 4px 20px rgba(108,92,231,.10);--g:linear-gradient(135deg,#6c5ce7,#a855f7 60%,#ec4899)}
+@media(prefers-color-scheme:dark){:root{--bg:#0d0b1e;--card:#171433;--tx:#ecebff;--mu:#9b98c4;--bd:#27234d;--okb:#0b3326;--erb:#3b1220;--wab:#3a2a08;--sh:0 4px 24px rgba(0,0,0,.4)}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;font:15px/1.5 Inter,system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
+.mainc{padding:0 16px 100px}.wrap{max-width:560px;margin:auto}
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:10;display:flex;background:var(--card);border-top:1px solid var(--bd);padding:6px 8px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,.06)}.tabbar .lg{display:none}
+.tabbar button{flex:1;border:0;background:none;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:2px;font:600 11px Inter,system-ui;padding:6px;border-radius:12px;cursor:pointer;position:relative}.tabbar button.on{color:var(--pr)}
+.tabbar b{position:absolute;top:0;right:22%;background:var(--er);color:#fff;border-radius:99px;font-size:10px;padding:0 6px}
+.view{display:none}.view.on{display:block;animation:f .3s}@keyframes f{from{opacity:0;transform:translateY(8px)}}
+.hero{background:var(--g);color:#fff;border-radius:0 0 28px 28px;margin:0 -16px;padding:30px 20px 60px;display:flex;justify-content:space-between;align-items:center}.hero h1{margin:0;font-size:24px}.hero small,.hero p{opacity:.9;margin:0}.pull{margin-top:-40px}
+.av{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.25);display:grid;place-items:center;font-weight:700;font-size:18px;color:#fff}
+.card{background:var(--card);border-radius:20px;padding:18px;box-shadow:var(--sh);margin-bottom:14px;border:1px solid var(--bd)}.card h3{margin:0 0 12px;font-size:16px}h2{font-size:20px;margin:22px 0 12px}
+.grid{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin-bottom:14px}.grid .card{margin:0}
+.stat{display:flex;flex-direction:column;gap:4px}.stat b{font-size:28px;line-height:1.1}.mu,.stat span{color:var(--mu);font-size:13px}
+.ico{width:40px;height:40px;border-radius:12px;display:inline-grid;place-items:center;background:rgba(108,92,231,.14);color:var(--pr)}
+label{display:block;font-size:12px;font-weight:600;color:var(--mu);margin:0 0 4px}
+input,select{width:100%;padding:13px 14px;border:1.5px solid var(--bd);border-radius:14px;background:var(--bg);color:var(--tx);font:inherit;margin:0 0 12px;outline:0}input:focus,select:focus{border-color:var(--pr)}
+.otp{font:700 30px ui-monospace,monospace;text-align:center;letter-spacing:12px}
+.btn{padding:13px 18px;border:0;border-radius:14px;background:var(--g);color:#fff;font:600 15px Inter,system-ui;cursor:pointer;box-shadow:0 6px 16px rgba(108,92,231,.3)}.btn:active{transform:scale(.98)}.btn.ok{background:var(--ok);box-shadow:none}.btn.er{background:var(--er);box-shadow:none}.btn.gh{background:var(--bg);color:var(--tx);box-shadow:none;border:1px solid var(--bd)}.btn.w{width:100%}.btn.s{padding:7px 13px;font-size:13px;border-radius:10px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--bd)}.row:last-child{border:0}
+.tag{padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;background:var(--okb);color:var(--ok);white-space:nowrap}.tag.er{background:var(--erb);color:var(--er)}.tag.wa{background:var(--wab);color:var(--wa)}.tag.pr{background:rgba(108,92,231,.15);color:var(--pr)}
+.bar{height:8px;background:var(--bd);border-radius:99px;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;border-radius:99px;transition:width .6s}
+.live{background:var(--g);color:#fff;text-align:center;border:0}.live .code{font:800 54px ui-monospace,monospace;letter-spacing:12px;margin:8px 0}.pulse{display:inline-flex;align-items:center;gap:6px;font-weight:600}.pulse:before{content:"";width:9px;height:9px;border-radius:50%;background:#fff;animation:p 1.2s infinite}@keyframes p{50%{opacity:.2}}
+.empty{text-align:center;color:var(--mu);padding:22px}.alert{background:var(--erb);color:var(--er);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-weight:500}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1e1b3a;color:#fff;padding:11px 20px;border-radius:99px;opacity:0;transition:.3s;pointer-events:none;z-index:99;font-weight:500}#toast.on{opacity:1}
+.sheet{background:var(--bg);border-radius:28px 28px 0 0;flex:1;padding:24px 20px 40px}.sheet .in{max-width:420px;margin:auto}.tabs{display:flex;background:var(--card);border-radius:14px;padding:4px;margin-bottom:18px;border:1px solid var(--bd)}.tabs button{flex:1;border:0;background:none;padding:10px;border-radius:11px;font:600 14px Inter,system-ui;color:var(--mu);cursor:pointer}.tabs .on{background:var(--g);color:#fff}
+@media(min-width:900px){.mainc{margin-left:230px;padding:0 32px 32px}.wrap{max-width:820px}.hero{margin:0 -32px}.tabbar{top:0;right:auto;width:230px;flex-direction:column;padding:20px 12px;border-top:0;border-right:1px solid var(--bd);box-shadow:none;gap:4px}.tabbar .lg{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;margin:0 8px 20px}.tabbar button{flex:none;flex-direction:row;gap:12px;font-size:14px;padding:12px 14px;justify-content:flex-start}.tabbar button.on{background:rgba(108,92,231,.12)}.tabbar b{position:static;margin-left:auto}#toast{bottom:30px}}
+</style></head><body>
+<div class="mainc"><div class="wrap"><section class="view" id="v-home">
+<div class="hero"><div><small id="gr"></small><h1>Hi, <span id="hi"></span> 👋</h1><p>Your attendance at a glance</p></div><div class="av" id="av"></div></div>
+<div class="pull"><div class="card" style="display:flex;align-items:center;gap:16px"><div id="ring"></div><div><b style="font-size:17px">Overall attendance</b><div class="mu" id="ovt"></div></div></div></div><div id="warn"></div><h2 style="margin-top:6px">Subjects</h2><div id="sum"></div></section>
+<section class="view" id="v-att"><h2>Mark attendance</h2><div class="card"><label>Subject</label><select id="sub"></select><label>Class code</label><input id="cd" class="otp" inputmode="numeric" maxlength="6" placeholder="······"><button id="go_" class="btn w">Submit attendance</button></div><p class="mu" style="text-align:center">Ask your professor for the live 6-digit code.</p></section>
+<section class="view" id="v-pf"><h2>Profile</h2><div id="pf"></div></section></div></div><nav id="nav" class="tabbar"></nav><div id="toast"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script>
+// TODO: paste YOUR Firebase web config here
+firebase.initializeApp({apiKey:"YOUR_API_KEY",authDomain:"YOUR_PROJECT.firebaseapp.com",projectId:"YOUR_PROJECT_ID",appId:"YOUR_APP_ID"});
+const A=firebase.auth(),D=firebase.firestore(),$=s=>document.querySelector(s),TS=firebase.firestore.FieldValue.serverTimestamp();
+const e=s=>String(s??"").replace(/[&<>"]/g,c=>"&#"+c.charCodeAt(0)+";");
+const toast=t=>{const x=$("#toast");x.textContent=t;x.classList.add("on");setTimeout(()=>x.classList.remove("on"),2600)};
+const hash=async t=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t)))].map(b=>b.toString(16).padStart(2,"0")).join("");
+const IC={home:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',check:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14l-3-3"/>',chart:'<path d="M12 20V10M18 20V4M6 20v-4"/>',user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5z"/>',live:'<circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.5M7.8 16.2a6 6 0 0 1 0-8.4M19 4.9a10 10 0 0 1 0 14.2M5 19.1a10 10 0 0 1 0-14.2"/>',set:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',dl:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',plus:'<path d="M12 5v14M5 12h14"/>'};
+const ic=n=>'<svg class="i" viewBox="0 0 24 24">'+IC[n]+'</svg>';
+const go=id=>{document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id=="v-"+id));document.querySelectorAll(".tabbar button").forEach(b=>b.classList.toggle("on",b.id=="t-"+id));scrollTo(0,0)};
+const shell=it=>{$("#nav").innerHTML='<div class="lg"><span class="ico">'+ic("check")+'</span>CampusAttend</div>'+it.map(x=>'<button id="t-'+x[0]+'" onclick="go(\''+x[0]+'\')">'+ic(x[2])+x[1]+'</button>').join("");go(it[0][0])};
+const out=()=>A.signOut().then(()=>location="index.html");
+const prof=d=>$("#pf").innerHTML='<div class="card" style="text-align:center"><div class="av" style="margin:auto;background:var(--g);width:76px;height:76px;font-size:30px">'+e(d.name[0])+'</div><h2 style="margin:12px 0 2px">'+e(d.name)+'</h2><div class="mu">'+e(d.email)+'</div><p><span class="tag pr">'+({student:"Student",teacher:"Professor",admin:"Admin"})[d.role]+'</span> <span class="tag">ID '+e(d.idNo||"-")+'</span>'+(d.section?' <span class="tag wa">'+e(d.section)+'</span>':'')+'</p></div><button class="btn er w" onclick="out()">'+ic("out")+' Logout</button>';
+const guard=(role,cb)=>A.onAuthStateChanged(async u=>{if(!u)return location="index.html";const d=(await D.doc("users/"+u.uid).get()).data();if(!d||d.role!==role||d.status!=="approved")return location="index.html";
+const h=new Date().getHours();$("#gr").textContent=h<12?"Good morning":h<17?"Good afternoon":"Good evening";$("#hi").textContent=d.name.split(" ")[0];$("#av").textContent=d.name[0].toUpperCase();prof(d);cb(u,d)});
+let me,pf,TH=75;shell([["home","Home","home"],["att","Attend","check"],["pf","Profile","user"]]);
+const ring=(p,c)=>'<svg width="112" height="112" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--bd)" stroke-width="9"/><circle cx="50" cy="50" r="42" fill="none" stroke="'+c+'" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+2.64*p+' 264" transform="rotate(-90 50 50)"/><text x="50" y="56" text-anchor="middle" font-size="20" font-weight="700" fill="var(--tx)">'+Math.round(p)+'%</text></svg>';
+guard("student",async(u,d)=>{me=u;pf=d;const t=await D.doc("settings/main").get();if(t.exists)TH=t.data().threshold;load()});
+async function load(){const sb=await D.collection("subjects").where("section","==",pf.section).get();
+$("#sub").innerHTML=sb.docs.map(d=>'<option value="'+d.id+'">'+e(d.data().name)+'</option>').join("")||'<option value="">No subjects</option>';
+const R=(await D.collection("records").where("uid","==",me.uid).get()).docs.map(d=>d.data());let h="",w="",tc=0,tp=0;
+for(const s of sb.docs){const c=(await D.collection("sessions").where("subjectId","==",s.id).get()).size,p=R.filter(r=>r.subjectId==s.id).length,pc=c?p/c*100:0,low=c&&pc<TH;tc+=c;tp+=p;
+if(low)w+='<div class="alert">⚠ '+e(s.data().name)+' is below '+TH+'%. Attend the next '+Math.ceil((TH*c-100*p)/(100-TH))+' class(es) in a row to reach it.</div>';
+h+='<div class="card"><div class="row" style="border:0;padding:0"><b>'+e(s.data().name)+'</b><span class="tag '+(low?'er':'')+'">'+pc.toFixed(1)+'%</span></div><div class="bar"><i style="width:'+pc+'%;background:'+(low?'var(--er)':'var(--ok)')+'"></i></div><span class="mu">'+p+' present of '+c+' classes</span></div>'}
+$("#sum").innerHTML=h||'<div class="card empty">No subjects for your section yet</div>';$("#warn").innerHTML=w;
+const o=tc?tp/tc*100:0;$("#ring").innerHTML=ring(o,tc&&o<TH?"#ef4444":"#10b981");$("#ovt").textContent=tp+" of "+tc+" classes · minimum "+TH+"%"}
+$("#go_").onclick=async()=>{const s=$("#sub").value,c=$("#cd").value.trim();
+if(!s)return toast("No subject selected");if(!/^\d{6}$/.test(c))return toast("Enter the 6-digit code");
+try{const q=await D.collection("sessions").where("subjectId","==",s).where("status","==","open").get();
+if(q.empty)return toast("No open session for this subject");
+const ses=q.docs[0];if((await hash(c))!=ses.data().codeHash)return toast("Invalid or expired code");
+const ref=D.doc("records/"+ses.id+"_"+me.uid);
+await D.runTransaction(async t=>{if((await t.get(ref)).exists)throw Error("Already marked for this session");t.set(ref,{sessionId:ses.id,subjectId:s,uid:me.uid,name:pf.name,status:"present",method:"self-checkin",at:TS})});
+toast("Attendance marked ✓");$("#cd").value="";load();go("home")}catch(x){toast(x.message)}};
+</script></body></html>

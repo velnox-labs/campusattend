@@ -1,261 +1,67 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin - CampusAttend</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<style>body{font-family:\'Poppins\',sans-serif}.tab-hidden{display:none}.nav-active{color:#4F46E5!important}</style>
-</head>
-<body class="bg-gray-100 flex justify-center">
-<div class="w-full max-w-[430px] bg-[#F8F9FF] min-h-screen shadow-xl relative pb-[70px]">
-
-    <!-- Header -->
-    <div class="bg-white p-4 flex justify-between items-center sticky top-0 z-20 border-b">
-        <div class="flex gap-3 items-center">
-            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white"><i class="fa-solid fa-shield-halved"></i></div>
-            <div><h2 class="font-bold text-sm leading-none">Admin Panel</h2><p class="text-xs text-gray-500">CampusAttend • Production</p></div>
-        </div>
-        <button onclick="logout()" class="w-9 h-9 bg-red-50 text-red-500 rounded-full"><i class="fa-solid fa-right-from-bracket text-sm"></i></button>
-    </div>
-
-    <!-- HOME TAB -->
-    <div id="tab-home" class="p-5">
-        <h1 class="font-bold">Dashboard</h1><p class="text-xs text-gray-500">Real data se stats - reload par bhi safe</p>
-        
-        <!-- Stats -->
-        <div class="grid grid-cols-2 gap-3 mt-4">
-            <div class="bg-gradient-to-br from-indigo-600 to-violet-600 text-white p-4 rounded-2xl">
-                <p class="text-xs opacity-80">Total Students</p><h2 class="text-2xl font-bold" id="statStud">0</h2>
-                <p class="text-[11px] opacity-80" id="statApproved">0 Approved</p>
-            </div>
-            <div class="bg-white p-4 rounded-2xl border">
-                <p class="text-xs text-gray-500">Live Sessions</p><h2 class="text-2xl font-bold" id="statSess">0</h2>
-                <p class="text-xs" id="statSessStatus">No Active</p>
-            </div>
-            <div class="bg-white p-4 rounded-2xl border">
-                <p class="text-xs text-gray-500">Total Records</p><h2 class="text-2xl font-bold" id="statRec">0</h2>
-                <p class="text-xs text-gray-400">Self + Manual</p>
-            </div>
-            <div class="bg-white p-4 rounded-2xl border">
-                <p class="text-xs text-gray-500">Threshold</p>
-                <div class="flex gap-1 items-center mt-1">
-                    <input id="thresh" type="number" value="75" class="w-14 border rounded-lg p-1 text-center font-bold text-sm">
-                    <span class="text-sm">%</span>
-                    <button onclick="saveThresh()" class="bg-indigo-600 text-white text-xs px-2 py-1.5 rounded-lg ml-1">Save</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pending Approvals -->
-        <div class="bg-white rounded-2xl p-4 mt-4 border">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="font-semibold text-sm">Pending Approvals</h3>
-                <span class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full" id="pendingCount">0 New</span>
-            </div>
-            <div id="pendingList" class="space-y-2"></div>
-            <button onclick="addDummyUser()" class="w-full mt-3 border-2 border-dashed py-2 rounded-xl text-xs text-gray-500"><i class="fa-solid fa-plus mr-1"></i> Add Dummy Pending User (Test)</button>
-        </div>
-
-        <!-- Audit Logs -->
-        <div class="bg-white rounded-2xl p-4 mt-4 border">
-            <div class="flex justify-between items-center mb-2"><h3 class="font-semibold text-sm">Audit Logs</h3><button onclick="clearAudit()" class="text-xs text-red-500">Clear</button></div>
-            <div id="audit" class="text-xs text-gray-600 space-y-1 max-h-32 overflow-y-auto bg-gray-50 p-2 rounded-xl"></div>
-        </div>
-    </div>
-
-    <!-- USERS TAB -->
-    <div id="tab-users" class="p-5 tab-hidden">
-        <h3 class="font-bold">User Management</h3>
-        <p class="text-xs text-gray-500 mb-3">Approve / Reject / Suspend - Role client se change nahi hota</p>
-        <input id="searchUser" oninput="renderUsers()" placeholder="Search name or roll..." class="w-full border p-3 rounded-xl text-sm">
-        <div id="userList" class="space-y-2 mt-3"></div>
-    </div>
-
-    <!-- ACADEMICS TAB -->
-    <div id="tab-academics" class="p-5 tab-hidden">
-        <h3 class="font-bold">Academic Setup</h3>
-        <p class="text-xs text-gray-500 mb-3">Subjects + Timetable - Professor sirf assigned subject me session bana sakta hai</p>
-        
-        <div class="bg-white p-4 rounded-2xl border">
-            <h4 class="font-semibold text-sm">Create Subject</h4>
-            <input id="subName" placeholder="Subject Name e.g. DBMS" class="w-full border p-3 rounded-xl mt-2 text-sm">
-            <input id="subCode" placeholder="Code e.g. CS302" class="w-full border p-3 rounded-xl mt-2 text-sm">
-            <input id="subSection" placeholder="Section e.g. CSE-A" class="w-full border p-3 rounded-xl mt-2 text-sm">
-            <button onclick="addSubject()" class="w-full bg-emerald-600 text-white py-3 rounded-xl mt-3 text-sm font-medium">Create Subject</button>
-        </div>
-        <div id="subList" class="mt-4 space-y-2"></div>
-
-        <div class="bg-white p-4 rounded-2xl border mt-4">
-            <h4 class="font-semibold text-sm">Live Session Monitor</h4>
-            <div id="liveMonitor" class="text-xs text-gray-600 mt-2 bg-gray-50 p-3 rounded-xl"></div>
-        </div>
-    </div>
-
-    <!-- REPORTS TAB -->
-    <div id="tab-reports" class="p-5 tab-hidden">
-        <h3 class="font-bold">Reports & Exports</h3>
-        <p class="text-xs text-gray-500 mb-3">Real records se PDF/Excel - Role based access</p>
-        
-        <div class="bg-white p-4 rounded-2xl border text-sm">
-            <p>Total Records: <b id="rTotal">0</b></p>
-            <p>Sessions: <b id="rSess">0</b></p>
-            <p>Subjects: <b id="rSub">0</b></p>
-            <p>Threshold: <b id="rThresh">75%</b></p>
-        </div>
-
-        <button onclick="exportPDF()" class="w-full bg-red-600 text-white py-3 rounded-xl mt-3 text-sm font-medium"><i class="fa-solid fa-file-pdf mr-2"></i> Export PDF Report</button>
-        <button onclick="exportExcel()" class="w-full bg-green-600 text-white py-3 rounded-xl mt-2 text-sm font-medium"><i class="fa-solid fa-file-excel mr-2"></i> Export Excel (XLSX)</button>
-        <button onclick="exportCSV()" class="w-full bg-indigo-600 text-white py-3 rounded-xl mt-2 text-sm font-medium"><i class="fa-solid fa-file-csv mr-2"></i> Export CSV</button>
-        
-        <div class="bg-white rounded-2xl p-3 mt-4 border">
-            <h4 class="font-semibold text-sm mb-2">Recent Records (Last 10)</h4>
-            <div id="reportList" class="space-y-1 text-xs"></div>
-        </div>
-        <button onclick="clearAllData()" class="w-full bg-gray-900 text-white py-2 rounded-xl mt-4 text-xs">⚠️ Clear All Demo Data</button>
-    </div>
-
-    <!-- Bottom Nav - APP JAISA -->
-    <div class="fixed bottom-0 w-full max-w-[430px] bg-white border-t flex justify-around py-2 z-20">
-        <button onclick="switchTab(\'home\')" id="nav-home" class="nav-active flex flex-col items-center text-indigo-600"><i class="fa-solid fa-house"></i><span class="text-[10px]">Home</span></button>
-        <button onclick="switchTab(\'users\')" id="nav-users" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-users"></i><span class="text-[10px]">Users</span></button>
-        <button onclick="switchTab(\'academics\')" id="nav-academics" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-book"></i><span class="text-[10px]">Academics</span></button>
-        <button onclick="switchTab(\'reports\')" id="nav-reports" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-chart-simple"></i><span class="text-[10px]">Reports</span></button>
-    </div>
-</div>
-
-<script>
-if(localStorage.getItem(\'role\')!==\'admin\') location.href=\'index.html\';
-
-// INIT DB
-if(!localStorage.getItem(\'ca_db\')) localStorage.setItem(\'ca_db\', JSON.stringify({users:[{name:"Rahul Verma", roll:"21CS101", status:"pending", dept:"CSE"},{name:"Priya Singh", roll:"21EC05", status:"pending", dept:"ECE"}], sessions:[], records:[], threshold:75, subjects:[{name:"Data Structures",code:"CS301",section:"CSE-A"},{name:"DBMS",code:"CS302",section:"CSE-A"},{name:"Operating System",code:"CS303",section:"CSE-A"}], audit:["System initialized at "+new Date().toLocaleString()]}));
-let DB = JSON.parse(localStorage.getItem(\'ca_db\'));
-function save(){localStorage.setItem(\'ca_db\', JSON.stringify(DB))}
-
-function switchTab(t){
-    [\'home\',\'users\',\'academics\',\'reports\'].forEach(x=>{
-        document.getElementById(\'tab-\'+x).classList.add(\'tab-hidden\');
-        document.getElementById(\'nav-\'+x).classList.remove(\'nav-active\',\'text-indigo-600\');
-        document.getElementById(\'nav-\'+x).classList.add(\'text-gray-400\');
-    });
-    document.getElementById(\'tab-\'+t).classList.remove(\'tab-hidden\');
-    document.getElementById(\'nav-\'+t).classList.add(\'nav-active\',\'text-indigo-600\');
-    renderAll();
-}
-
-function renderAll(){
-    DB = JSON.parse(localStorage.getItem(\'ca_db\'));
-    // Stats
-    let approved = DB.users.filter(u=>u.status===\'approved\').length;
-    document.getElementById(\'statStud\').innerText = DB.users.length + 486;
-    document.getElementById(\'statApproved\').innerText = approved + " Approved";
-    document.getElementById(\'statSess\').innerText = DB.sessions.length;
-    document.getElementById(\'statRec\').innerText = DB.records.length;
-    document.getElementById(\'thresh\').value = DB.threshold;
-    
-    let live = JSON.parse(localStorage.getItem(\'ca_live_session\') || \'null\');
-    let sEl = document.getElementById(\'statSessStatus\');
-    if(live && live.status===\'open\' && Date.now() < live.expiresAt) sEl.innerHTML = \'<span class="text-emerald-600">● LIVE OPEN</span> Code: \'+live.code;
-    else if(live && live.status===\'open\') sEl.innerHTML = \'<span class="text-orange-500">● Expired</span>\';
-    else sEl.innerHTML = \'<span class="text-gray-400">No Active</span>\';
-
-    // Pending
-    let pending = DB.users.filter(u=>u.status===\'pending\');
-    document.getElementById(\'pendingCount\').innerText = pending.length + " New";
-    let pList=document.getElementById(\'pendingList\');
-    if(!pending.length) pList.innerHTML=\'<p class="text-xs text-gray-400 text-center py-3">No pending approvals</p>\';
-    else pList.innerHTML = pending.map((u,i)=>{
-        let idx = DB.users.indexOf(u);
-        return `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
-            <div><p class="text-sm font-semibold">${u.name}</p><p class="text-xs text-gray-500">${u.roll} • ${u.dept||\'CSE\'}</p></div>
-            <div class="flex gap-1"><button onclick="approve(${idx})" class="bg-emerald-500 text-white px-3 py-1.5 rounded-full text-xs">Approve</button><button onclick="reject(${idx})" class="bg-red-500 text-white px-3 py-1.5 rounded-full text-xs">Reject</button></div>
-        </div>`;
-    }).join(\'\');
-
-    // Audit
-    document.getElementById(\'audit\').innerHTML = DB.audit.slice(-10).reverse().map(a=>`• ${a}`).join(\'<br>\') || \'No logs\';
-
-    // Users tab
-    renderUsers();
-    // Subjects
-    renderSubjects();
-    // Reports
-    document.getElementById(\'rTotal\').innerText = DB.records.length;
-    document.getElementById(\'rSess\').innerText = DB.sessions.length;
-    document.getElementById(\'rSub\').innerText = (DB.subjects||[]).length;
-    document.getElementById(\'rThresh\').innerText = DB.threshold + "%";
-    let rList=document.getElementById(\'reportList\');
-    if(!DB.records.length) rList.innerHTML=\'<p class="text-gray-400">No records yet - Teacher se session karwao</p>\';
-    else rList.innerHTML = DB.records.slice(-10).reverse().map(r=>`<div class="flex justify-between bg-gray-50 p-2 rounded-lg"><span>${r.roll} • ${r.subjectCode||\'CS301\'} • ${r.status}</span><span class="${r.method===\'manual\'?\'text-orange-600\':\'text-emerald-600\'}">${r.method}</span></div>`).join(\'\');
-
-    // Live monitor
-    document.getElementById(\'liveMonitor\').innerHTML = live ? `Session: ${live.sessionId}<br>Code: <b>${live.code}</b> • Expires: ${new Date(live.expiresAt).toLocaleTimeString()}<br>Status: ${live.status}` : \'No live session\';
-}
-
-function renderUsers(){
-    let q = (document.getElementById(\'searchUser\')?.value || \'\').toLowerCase();
-    let list=document.getElementById(\'userList\');
-    let filtered = DB.users.filter(u=> u.name.toLowerCase().includes(q) || u.roll.toLowerCase().includes(q));
-    if(!filtered.length) list.innerHTML=\'<p class="text-xs text-gray-400 text-center">No users found</p>\';
-    else list.innerHTML = filtered.map((u,i)=>{
-        let idx=DB.users.indexOf(u);
-        let badge = u.status===\'approved\'?\'bg-emerald-100 text-emerald-700\': u.status===\'pending\'?\'bg-orange-100 text-orange-700\':\'bg-red-100 text-red-700\';
-        return `<div class="bg-white p-3 rounded-xl border flex justify-between items-center">
-            <div><p class="text-sm font-semibold">${u.name}</p><p class="text-xs text-gray-500">${u.roll}</p><span class="text-[11px] px-2 py-0.5 rounded-full ${badge}">${u.status}</span></div>
-            <div class="flex flex-col gap-1"><button onclick="approve(${idx})" class="bg-emerald-500 text-white text-xs px-2 py-1 rounded">Approve</button><button onclick="suspend(${idx})" class="bg-gray-800 text-white text-xs px-2 py-1 rounded">Suspend</button></div>
-        </div>`;
-    }).join(\'\');
-}
-
-function renderSubjects(){
-    let d=document.getElementById(\'subList\');
-    d.innerHTML = (DB.subjects||[]).map((s,i)=>`<div class="bg-white p-3 rounded-xl border flex justify-between items-center"><div><p class="text-sm font-semibold">${s.name}</p><p class="text-xs text-gray-500">${s.code} • ${s.section}</p></div><button onclick="delSub(${i})" class="text-red-500 text-xs">Delete</button></div>`).join(\'\') || \'<p class="text-xs text-gray-400">No subjects</p>\';
-}
-
-function approve(i){DB.users[i].status=\'approved\'; DB.audit.push(`${DB.users[i].name} (${DB.users[i].roll}) APPROVED at ${new Date().toLocaleTimeString()}`); save(); renderAll();}
-function reject(i){DB.users[i].status=\'rejected\'; DB.audit.push(`${DB.users[i].name} REJECTED`); save(); renderAll();}
-function suspend(i){DB.users[i].status=\'suspended\'; DB.audit.push(`${DB.users[i].name} SUSPENDED`); save(); renderAll();}
-function saveThresh(){DB.threshold=document.getElementById(\'thresh\').value; DB.audit.push(`Threshold changed to ${DB.threshold}%`); save(); alert(\'Threshold \'+DB.threshold+\'% saved!\'); renderAll();}
-function addSubject(){
-    let n=document.getElementById(\'subName\').value.trim(), c=document.getElementById(\'subCode\').value.trim(), s=document.getElementById(\'subSection\').value.trim()||\'CSE-A\';
-    if(!n||!c) return alert(\'Name aur Code bharo\');
-    if(!DB.subjects) DB.subjects=[]; DB.subjects.push({name:n,code:c,section:s});
-    DB.audit.push(`Subject created ${n} (${c})`); save(); renderAll();
-    document.getElementById(\'subName\').value=\'\'; document.getElementById(\'subCode\').value=\'\'; document.getElementById(\'subSection\').value=\'\';
-}
-function delSub(i){DB.subjects.splice(i,1); save(); renderAll();}
-function addDummyUser(){let r="21CS"+Math.floor(100+Math.random()*900); DB.users.push({name:"Test Student "+r, roll:r, status:"pending", dept:"CSE"}); save(); renderAll();}
-function clearAudit(){DB.audit=[]; save(); renderAll();}
-function clearAllData(){if(confirm(\'Saara data delete ho jayega?\')){localStorage.removeItem(\'ca_db\'); localStorage.removeItem(\'ca_live_session\'); location.reload();}}
-
-// Exports - Real Data
-function exportPDF(){
-    const {jsPDF}=window.jspdf; const doc=new jsPDF();
-    doc.setFontSize(14); doc.text("CampusAttend - Attendance Report",14,18);
-    doc.setFontSize(9); doc.text(`Generated: ${new Date().toLocaleString()} | Threshold: ${DB.threshold}%`,14,26);
-    doc.text(`Total Records: ${DB.records.length} | Sessions: ${DB.sessions.length}`,14,32);
-    let y=42;
-    doc.text("Roll | Subject | Status | Method | Time",14,y); y+=6;
-    DB.records.slice(-25).forEach(r=>{ doc.text(`${r.roll} | ${r.subjectCode||\'CS301\'} | ${r.status} | ${r.method} | ${r.time}`,14,y); y+=6; if(y>280){doc.addPage(); y=18}});
-    doc.save("CampusAttend_Report.pdf");
-}
-function exportExcel(){
-    let data = DB.records.length? DB.records : [{Message:"No records yet - Pehle attendance lo"}];
-    let ws=XLSX.utils.json_to_sheet(data); let wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Attendance"); XLSX.writeFile(wb,"CampusAttend_Report.xlsx");
-}
-function exportCSV(){
-    let rows = DB.records.length? DB.records : [{roll:"No data", status:"-"}];
-    let ws=XLSX.utils.json_to_sheet(rows); let csv=XLSX.utils.sheet_to_csv(ws);
-    let blob=new Blob([csv],{type:"text/csv"}); let a=document.createElement(\'a\'); a.href=URL.createObjectURL(blob); a.download="CampusAttend_Report.csv"; a.click();
-}
-function logout(){localStorage.removeItem(\'role\'); location.href=\'index.html\';}
-
-renderAll();
-setInterval(renderAll,1500);
-</script>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#6c5ce7"><title>CampusAttend</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>
+:root{--bg:#f4f2ff;--card:#fff;--tx:#1e1b3a;--mu:#7a7899;--bd:#e8e5fa;--pr:#6c5ce7;--ok:#10b981;--okb:#d1fae5;--er:#ef4444;--erb:#fee2e2;--wa:#f59e0b;--wab:#fef3c7;--sh:0 4px 20px rgba(108,92,231,.10);--g:linear-gradient(135deg,#6c5ce7,#a855f7 60%,#ec4899)}
+@media(prefers-color-scheme:dark){:root{--bg:#0d0b1e;--card:#171433;--tx:#ecebff;--mu:#9b98c4;--bd:#27234d;--okb:#0b3326;--erb:#3b1220;--wab:#3a2a08;--sh:0 4px 24px rgba(0,0,0,.4)}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;font:15px/1.5 Inter,system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
+.mainc{padding:0 16px 100px}.wrap{max-width:560px;margin:auto}
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:10;display:flex;background:var(--card);border-top:1px solid var(--bd);padding:6px 8px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,.06)}.tabbar .lg{display:none}
+.tabbar button{flex:1;border:0;background:none;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:2px;font:600 11px Inter,system-ui;padding:6px;border-radius:12px;cursor:pointer;position:relative}.tabbar button.on{color:var(--pr)}
+.tabbar b{position:absolute;top:0;right:22%;background:var(--er);color:#fff;border-radius:99px;font-size:10px;padding:0 6px}
+.view{display:none}.view.on{display:block;animation:f .3s}@keyframes f{from{opacity:0;transform:translateY(8px)}}
+.hero{background:var(--g);color:#fff;border-radius:0 0 28px 28px;margin:0 -16px;padding:30px 20px 60px;display:flex;justify-content:space-between;align-items:center}.hero h1{margin:0;font-size:24px}.hero small,.hero p{opacity:.9;margin:0}.pull{margin-top:-40px}
+.av{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.25);display:grid;place-items:center;font-weight:700;font-size:18px;color:#fff}
+.card{background:var(--card);border-radius:20px;padding:18px;box-shadow:var(--sh);margin-bottom:14px;border:1px solid var(--bd)}.card h3{margin:0 0 12px;font-size:16px}h2{font-size:20px;margin:22px 0 12px}
+.grid{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin-bottom:14px}.grid .card{margin:0}
+.stat{display:flex;flex-direction:column;gap:4px}.stat b{font-size:28px;line-height:1.1}.mu,.stat span{color:var(--mu);font-size:13px}
+.ico{width:40px;height:40px;border-radius:12px;display:inline-grid;place-items:center;background:rgba(108,92,231,.14);color:var(--pr)}
+label{display:block;font-size:12px;font-weight:600;color:var(--mu);margin:0 0 4px}
+input,select{width:100%;padding:13px 14px;border:1.5px solid var(--bd);border-radius:14px;background:var(--bg);color:var(--tx);font:inherit;margin:0 0 12px;outline:0}input:focus,select:focus{border-color:var(--pr)}
+.otp{font:700 30px ui-monospace,monospace;text-align:center;letter-spacing:12px}
+.btn{padding:13px 18px;border:0;border-radius:14px;background:var(--g);color:#fff;font:600 15px Inter,system-ui;cursor:pointer;box-shadow:0 6px 16px rgba(108,92,231,.3)}.btn:active{transform:scale(.98)}.btn.ok{background:var(--ok);box-shadow:none}.btn.er{background:var(--er);box-shadow:none}.btn.gh{background:var(--bg);color:var(--tx);box-shadow:none;border:1px solid var(--bd)}.btn.w{width:100%}.btn.s{padding:7px 13px;font-size:13px;border-radius:10px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--bd)}.row:last-child{border:0}
+.tag{padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;background:var(--okb);color:var(--ok);white-space:nowrap}.tag.er{background:var(--erb);color:var(--er)}.tag.wa{background:var(--wab);color:var(--wa)}.tag.pr{background:rgba(108,92,231,.15);color:var(--pr)}
+.bar{height:8px;background:var(--bd);border-radius:99px;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;border-radius:99px;transition:width .6s}
+.live{background:var(--g);color:#fff;text-align:center;border:0}.live .code{font:800 54px ui-monospace,monospace;letter-spacing:12px;margin:8px 0}.pulse{display:inline-flex;align-items:center;gap:6px;font-weight:600}.pulse:before{content:"";width:9px;height:9px;border-radius:50%;background:#fff;animation:p 1.2s infinite}@keyframes p{50%{opacity:.2}}
+.empty{text-align:center;color:var(--mu);padding:22px}.alert{background:var(--erb);color:var(--er);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-weight:500}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1e1b3a;color:#fff;padding:11px 20px;border-radius:99px;opacity:0;transition:.3s;pointer-events:none;z-index:99;font-weight:500}#toast.on{opacity:1}
+.sheet{background:var(--bg);border-radius:28px 28px 0 0;flex:1;padding:24px 20px 40px}.sheet .in{max-width:420px;margin:auto}.tabs{display:flex;background:var(--card);border-radius:14px;padding:4px;margin-bottom:18px;border:1px solid var(--bd)}.tabs button{flex:1;border:0;background:none;padding:10px;border-radius:11px;font:600 14px Inter,system-ui;color:var(--mu);cursor:pointer}.tabs .on{background:var(--g);color:#fff}
+@media(min-width:900px){.mainc{margin-left:230px;padding:0 32px 32px}.wrap{max-width:820px}.hero{margin:0 -32px}.tabbar{top:0;right:auto;width:230px;flex-direction:column;padding:20px 12px;border-top:0;border-right:1px solid var(--bd);box-shadow:none;gap:4px}.tabbar .lg{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;margin:0 8px 20px}.tabbar button{flex:none;flex-direction:row;gap:12px;font-size:14px;padding:12px 14px;justify-content:flex-start}.tabbar button.on{background:rgba(108,92,231,.12)}.tabbar b{position:static;margin-left:auto}#toast{bottom:30px}}
+</style></head><body>
+<div class="mainc"><div class="wrap"><section class="view" id="v-home">
+<div class="hero"><div><small id="gr"></small><h1>Hi, <span id="hi"></span> 👋</h1><p>Institution overview</p></div><div class="av" id="av"></div></div>
+<div class="pull"><div id="st" class="grid"></div></div><div class="card"><h3>Pending requests</h3><div class="row" style="border:0"><span id="pc" class="mu"></span><button class="btn s" onclick="go('app')">Review</button></div></div></section>
+<section class="view" id="v-app"><h2>Approvals</h2><div class="card" id="pend"></div></section>
+<section class="view" id="v-sub"><h2>Subjects</h2><div class="card"><h3>Create subject</h3><label>Subject name</label><input id="sn"><label>Section</label><input id="ss" placeholder="CSE-A"><label>Professor</label><select id="st2"></select><button class="btn w" onclick="addSub()">Add subject</button></div><div class="card" id="subs"></div></section>
+<section class="view" id="v-set"><h2>Settings</h2><div class="card"><h3>Attendance threshold</h3><label>Minimum % required</label><input id="th" type="number" value="75"><button class="btn w" onclick="saveTh()">Save</button></div><div class="card"><h3>Reports</h3><button class="btn gh w" onclick="csv()">Download CSV report</button></div><div id="pf"></div></section></div></div><nav id="nav" class="tabbar"></nav><div id="toast"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script>
+// TODO: paste YOUR Firebase web config here
+firebase.initializeApp({apiKey:"YOUR_API_KEY",authDomain:"YOUR_PROJECT.firebaseapp.com",projectId:"YOUR_PROJECT_ID",appId:"YOUR_APP_ID"});
+const A=firebase.auth(),D=firebase.firestore(),$=s=>document.querySelector(s),TS=firebase.firestore.FieldValue.serverTimestamp();
+const e=s=>String(s??"").replace(/[&<>"]/g,c=>"&#"+c.charCodeAt(0)+";");
+const toast=t=>{const x=$("#toast");x.textContent=t;x.classList.add("on");setTimeout(()=>x.classList.remove("on"),2600)};
+const hash=async t=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t)))].map(b=>b.toString(16).padStart(2,"0")).join("");
+const IC={home:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',check:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14l-3-3"/>',chart:'<path d="M12 20V10M18 20V4M6 20v-4"/>',user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5z"/>',live:'<circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.5M7.8 16.2a6 6 0 0 1 0-8.4M19 4.9a10 10 0 0 1 0 14.2M5 19.1a10 10 0 0 1 0-14.2"/>',set:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',dl:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',plus:'<path d="M12 5v14M5 12h14"/>'};
+const ic=n=>'<svg class="i" viewBox="0 0 24 24">'+IC[n]+'</svg>';
+const go=id=>{document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id=="v-"+id));document.querySelectorAll(".tabbar button").forEach(b=>b.classList.toggle("on",b.id=="t-"+id));scrollTo(0,0)};
+const shell=it=>{$("#nav").innerHTML='<div class="lg"><span class="ico">'+ic("check")+'</span>CampusAttend</div>'+it.map(x=>'<button id="t-'+x[0]+'" onclick="go(\''+x[0]+'\')">'+ic(x[2])+x[1]+'</button>').join("");go(it[0][0])};
+const out=()=>A.signOut().then(()=>location="index.html");
+const prof=d=>$("#pf").innerHTML='<div class="card" style="text-align:center"><div class="av" style="margin:auto;background:var(--g);width:76px;height:76px;font-size:30px">'+e(d.name[0])+'</div><h2 style="margin:12px 0 2px">'+e(d.name)+'</h2><div class="mu">'+e(d.email)+'</div><p><span class="tag pr">'+({student:"Student",teacher:"Professor",admin:"Admin"})[d.role]+'</span> <span class="tag">ID '+e(d.idNo||"-")+'</span>'+(d.section?' <span class="tag wa">'+e(d.section)+'</span>':'')+'</p></div><button class="btn er w" onclick="out()">'+ic("out")+' Logout</button>';
+const guard=(role,cb)=>A.onAuthStateChanged(async u=>{if(!u)return location="index.html";const d=(await D.doc("users/"+u.uid).get()).data();if(!d||d.role!==role||d.status!=="approved")return location="index.html";
+const h=new Date().getHours();$("#gr").textContent=h<12?"Good morning":h<17?"Good afternoon":"Good evening";$("#hi").textContent=d.name.split(" ")[0];$("#av").textContent=d.name[0].toUpperCase();prof(d);cb(u,d)});
+let U,S,SE,R;shell([["home","Home","home"],["app","Approvals","users"],["sub","Subjects","book"],["set","Settings","set"]]);guard("admin",()=>load());
+async function load(){const g=c=>D.collection(c).get().then(q=>q.docs.map(d=>({id:d.id,...d.data()})));
+[U,S,SE,R]=await Promise.all([g("users"),g("subjects"),g("sessions"),g("records")]);
+const th=await D.doc("settings/main").get();if(th.exists)$("#th").value=th.data().threshold;
+const n=r=>U.filter(u=>u.role==r&&u.status=="approved").length,nm=id=>(U.find(u=>u.id==id)||{}).name||"-",pe=U.filter(u=>u.status=="pending");
+$("#st").innerHTML=[["Students",n("student"),"users"],["Professors",n("teacher"),"user"],["Subjects",S.length,"book"],["Sessions",SE.length,"chart"]].map(x=>'<div class="card stat"><span class="ico">'+ic(x[2])+'</span><b>'+x[1]+'</b><span>'+x[0]+'</span></div>').join("");
+$("#pc").textContent=pe.length+" account(s) waiting";const t=$("#t-app");t.querySelector("b")?.remove();if(pe.length)t.insertAdjacentHTML("beforeend","<b>"+pe.length+"</b>");
+$("#pend").innerHTML=pe.map(u=>'<div class="row"><div><b>'+e(u.name)+'</b><div class="mu">'+(u.role=="teacher"?"Professor":"Student")+' · '+e(u.idNo)+' '+e(u.section||"")+'</div></div><div><button class="btn ok s" onclick="setS(\''+u.id+'\',\'approved\')">Approve</button> <button class="btn er s" onclick="setS(\''+u.id+'\',\'rejected\')">Reject</button></div></div>').join("")||'<div class="empty">All caught up ✓</div>';
+$("#st2").innerHTML=U.filter(u=>u.role=="teacher"&&u.status=="approved").map(u=>'<option value="'+u.id+'">'+e(u.name)+'</option>').join("");
+$("#subs").innerHTML=S.map(s=>'<div class="row"><b>'+e(s.name)+'</b><span><span class="tag pr">'+e(s.section)+'</span> <span class="mu">'+e(nm(s.teacherUid))+'</span></span></div>').join("")||'<div class="empty">No subjects yet</div>'}
+const setS=(id,s)=>D.doc("users/"+id).update({status:s}).then(()=>{toast("Updated");load()});
+const saveTh=()=>D.doc("settings/main").set({threshold:+$("#th").value}).then(()=>toast("Threshold saved"));
+const addSub=()=>{if(!$("#sn").value||!$("#ss").value||!$("#st2").value)return toast("Fill all fields");D.collection("subjects").add({name:$("#sn").value.trim(),section:$("#ss").value.trim(),teacherUid:$("#st2").value}).then(()=>{$("#sn").value="";toast("Subject added");load()})};
+function csv(){const th=+$("#th").value,rows=[["ID","Name","Section","Subject","Conducted","Present","Percent","Below threshold"]];
+S.forEach(s=>{const c=SE.filter(x=>x.subjectId==s.id).length;U.filter(u=>u.role=="student"&&u.status=="approved"&&u.section==s.section).forEach(u=>{const p=R.filter(r=>r.uid==u.id&&r.subjectId==s.id).length,pc=c?(p/c*100).toFixed(1):"0";rows.push([u.idNo,u.name,u.section,s.name,c,p,pc,+pc<th?"YES":"no"])})});
+const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n")],{type:"text/csv"}));a.download="attendance-report.csv";a.click()}
+</script></body></html>
