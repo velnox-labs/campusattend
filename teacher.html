@@ -38,8 +38,35 @@ input,select{width:100%;padding:13px 14px;border:1.5px solid var(--bd);border-ra
 <section class="view" id="v-pf"><h2>Profile</h2><div id="pf"></div></section></div></div><nav id="nav" class="tabbar"></nav><div id="toast"></div>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script>
 // TODO: paste YOUR Firebase web config here
-firebase.initializeApp({apiKey:"YOUR_API_KEY",authDomain:"YOUR_PROJECT.firebaseapp.com",projectId:"YOUR_PROJECT_ID",appId:"YOUR_APP_ID"});
-const A=firebase.auth(),D=firebase.firestore(),$=s=>document.querySelector(s),TS=firebase.firestore.FieldValue.serverTimestamp();
+const CFG={apiKey:"YOUR_API_KEY",authDomain:"YOUR_PROJECT.firebaseapp.com",projectId:"YOUR_PROJECT_ID",appId:"YOUR_APP_ID"};
+const DEMO=CFG.apiKey==="YOUR_API_KEY";let A,D,TS;
+if(DEMO){(()=>{const K="ca_demo_v1",ls=localStorage,now=()=>Math.floor(Date.now()/1e3),L=[];
+const seed=()=>{const db={},cr={},T=()=>({__ts:now()});
+const u=(id,n,em,pw,role,no,sec,st)=>{db["users/"+id]={name:n,email:em,idNo:no,role,section:sec,status:st||"approved",createdAt:T()};cr[em]={pw,uid:id}};
+u("admin1","Admin Sharma","admin@demo.com","admin123","admin","ADM001","");u("prof1","Prof. Verma","prof@demo.com","prof123","teacher","FAC101","");
+u("stu1","Rohan Gupta","student@demo.com","student123","student","CS21001","CSE-A");u("stu2","Priya Singh","priya@demo.com","student123","student","CS21002","CSE-A");
+u("stu3","Aman Yadav","aman@demo.com","student123","student","CS21003","CSE-A","pending");u("prof2","Prof. Mishra","mishra@demo.com","prof123","teacher","FAC102","","pending");
+db["settings/main"]={threshold:75};
+for(const[sid,nm,ns,p1,p2]of[["s1","Data Structures",10,8,9],["s2","DBMS",8,5,7]]){db["subjects/"+sid]={name:nm,section:"CSE-A",teacherUid:"prof1"};
+for(let i=1;i<=ns;i++){const id=sid+"_"+i;db["sessions/"+id]={subjectId:sid,teacherUid:"prof1",codeHash:"x",status:"closed",createdAt:{__ts:now()-86400*(ns-i+1)}};
+if(i<=p1)db["records/"+id+"_stu1"]={sessionId:id,subjectId:sid,uid:"stu1",name:"Rohan Gupta",status:"present",method:"self-checkin",at:T()};
+if(i<=p2)db["records/"+id+"_stu2"]={sessionId:id,subjectId:sid,uid:"stu2",name:"Priya Singh",status:"present",method:"self-checkin",at:T()}}}
+return{db,cr}};
+if(!ls.getItem(K))ls.setItem(K,JSON.stringify(seed()));
+const st=()=>JSON.parse(ls.getItem(K)),save=s=>ls.setItem(K,JSON.stringify(s)),fire=()=>L.forEach(f=>f());addEventListener("storage",fire);
+const rd=o=>{const r={};for(const k in o){const v=o[k];r[k]=v&&v.__ts?{seconds:v.__ts,toDate:()=>new Date(v.__ts*1e3)}:v}return r};
+const wr=o=>{const r={};for(const k in o)r[k]=o[k]==="__TS__"?{__ts:now()}:o[k];return r};
+const ds=(p,id)=>{const v=st().db[p];return{id,exists:!!v,data:()=>v&&rd(v)}};
+const run=(n,f)=>{const s=st(),docs=Object.keys(s.db).filter(p=>p.startsWith(n+"/")&&p.indexOf("/",n.length+1)<0).map(p=>ds(p,p.slice(n.length+1))).filter(d=>f.every(([k,v])=>d.data()[k]===v));return{docs,size:docs.length,empty:!docs.length}};
+const Q=(n,f)=>({where:(k,o,v)=>Q(n,[...f,[k,v]]),get:async()=>run(n,f),add:async d=>{const id="d"+Math.random().toString(36).slice(2,10);await D.doc(n+"/"+id).set(d);return{id}},
+onSnapshot:cb=>{const fn=()=>cb(run(n,f));fn();L.push(fn);return()=>L.splice(L.indexOf(fn),1)}});
+D={doc:p=>({get:async()=>ds(p,p.split("/").pop()),set:async d=>{const s=st();s.db[p]=wr(d);save(s);fire()},update:async d=>{const s=st();s.db[p]={...s.db[p],...wr(d)};save(s);fire()}}),collection:n=>Q(n,[]),runTransaction:async f=>f({get:r=>r.get(),set:(r,d)=>r.set(d)})};
+A={onAuthStateChanged:cb=>{const u=ls.getItem("ca_uid");setTimeout(()=>cb(u?{uid:u}:null),0)},
+signInWithEmailAndPassword:async(em,pw)=>{const c=st().cr[em.toLowerCase()];if(!c||c.pw!==pw)throw Error("Invalid email or password");ls.setItem("ca_uid",c.uid);return{user:{uid:c.uid}}},
+createUserWithEmailAndPassword:async(em,pw)=>{const s=st(),k=em.toLowerCase();if(s.cr[k])throw Error("Email already registered");const uid="u"+Math.random().toString(36).slice(2,9);s.cr[k]={pw,uid};save(s);ls.setItem("ca_uid",uid);return{user:{uid,delete:async()=>{const s=st();delete s.cr[k];save(s);ls.removeItem("ca_uid")}}}},
+signOut:async()=>ls.removeItem("ca_uid"),sendPasswordResetEmail:async()=>{}};TS="__TS__"})()}
+else{firebase.initializeApp(CFG);A=firebase.auth();D=firebase.firestore();TS=firebase.firestore.FieldValue.serverTimestamp()}
+const $=s=>document.querySelector(s);
 const e=s=>String(s??"").replace(/[&<>"]/g,c=>"&#"+c.charCodeAt(0)+";");
 const toast=t=>{const x=$("#toast");x.textContent=t;x.classList.add("on");setTimeout(()=>x.classList.remove("on"),2600)};
 const hash=async t=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t)))].map(b=>b.toString(16).padStart(2,"0")).join("");
