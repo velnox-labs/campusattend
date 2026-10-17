@@ -211,6 +211,8 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .flexwrap{display:flex;flex-wrap:wrap;gap:6px}
 .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 2px 10px;font-weight:600;font-size:13.5px}
 </style>
+<script type="module" src="fb-teacher.js"></script>
+<script type="module" src="fb-manage.js"></script>
 </head>
 <body>
 <div class="app" id="app">
@@ -330,7 +332,7 @@ const logout=()=>{try{localStorage.removeItem(SES)}catch(e){}};
 const getClass=id=>db().classes.find(c=>c.id===id);
 const cohortName=id=>(db().cohorts.find(c=>c.id===id)||{}).name||id;
 const teacherOf=id=>db().teachers.find(t=>t.id===id);
-const roster=classId=>{const c=getClass(classId);return db().students.filter(s=>s.cohort===c.cohort)};
+const roster=classId=>{const c=getClass(classId);return db().students.filter(s=>s.cohort===c.cohort&&(!c.fb||(c.enr||[]).includes(s.id)))};
 const classesOfTeacher=tid=>db().classes.filter(c=>c.teacherId===tid);
 const classesOfStudent=s=>db().classes.filter(c=>c.cohort===s.cohort);
 const getSession=id=>db().sessions.find(s=>s.id===id);
@@ -501,6 +503,11 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
 (function(){
   var me=CA.current('teacher');
   if(!me){location.replace('index.html');return}
+  if(me.user.fb){addEventListener('load',function(){
+    if(!window.FBT)return;
+    FBT.watch(function(ok){if(!ok){CA.logout();location.replace('index.html')}});
+    if(window.FBM)FBM.teacher();
+  })}
   var T=me.user,ic=CA.icon,esc=CA.esc,$=function(id){return document.getElementById(id)};
   var lead=function(n){return ic(n,20).replace('<svg','<svg class="lead"')};
   var S={view:'home',classId:null,method:'live',sid:null,sig:'',m:null,rep:{classId:null,tab:'students',low:false},sheet:null};
@@ -728,7 +735,7 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
       CA.sheet({title:'Reset demo data?',body:'<p class="muted">This restores the sample classes, students and attendance history. Any sessions you recorded will be removed.</p>',foot:'<button class="btn ghost" data-close>Cancel</button><button class="btn danger" data-act="reset-ok">Reset</button>'});
     },
     'reset-ok':function(){CA.closeSheet();CA.resetDemo();S.sid=null;S.classId=null;S.rep.classId=null;CA.toast('Demo data restored');render()},
-    logout:function(){CA.logout();location.replace('index.html')}
+    logout:function(){CA.logout();var go=function(){location.replace('index.html')};window.FBT?FBT.logout().then(go,go):go()}
   };
   document.addEventListener('click',function(e){var el=e.target.closest('[data-act]');if(!el)return;var f=A[el.dataset.act];if(f)f(el,e)});
   document.addEventListener('input',function(e){if(e.target.id==='mq'&&S.m){S.m.q=e.target.value;fillManual()}});

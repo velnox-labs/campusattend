@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Admin · CampusAttend</title>
+<style>
+:root{--bg:#F6F3F2;--s:#fff;--ink:#1D1816;--ink2:#645B58;--line:#EAE3E1;--br:#C8221A}
+@media(prefers-color-scheme:dark){:root{--bg:#120E0E;--s:#1D1717;--ink:#F6EFED;--ink2:#BDB0AC;--line:#332828;--br:#CF3128}}
+*{box-sizing:border-box}body{margin:0;font:14px/1.4 system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+.wrap{max-width:980px;margin:0 auto;padding:16px}h1{font-size:18px;margin:0}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+button,select,input{font:inherit;color:inherit;border:1px solid var(--line);background:var(--s);border-radius:10px;padding:8px 10px}
+button{cursor:pointer;font-weight:600}.on,.pri{background:var(--br);color:#fff;border-color:var(--br)}
+.box{background:var(--s);border:1px solid var(--line);border-radius:14px;padding:10px;overflow-x:auto}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--ink2);font-size:12px}.m{color:var(--ink2);padding:8px}
+#login{max-width:340px;margin:12vh auto;display:grid;gap:10px}#err{color:#B3261E}
+.add{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}[hidden]{display:none!important}
+</style></head><body>
+<div class="wrap">
+<form id="login"><h1>Admin sign in</h1><input id="em" type="email" placeholder="Email" required><input id="pw" type="password" placeholder="Password" required><button class="pri">Sign in</button><div id="err"></div></form>
+<div id="app" hidden>
+ <div class="bar"><h1>CampusAttend · Admin</h1><button id="out">Sign out</button></div>
+ <div class="tabs" id="tabs"></div>
+ <div id="v-teachers" class="box"></div>
+ <div id="v-students" class="box" hidden></div>
+ <div id="v-classes" hidden><div class="box add"><input id="c-s" placeholder="Subject"><input id="c-c" placeholder="Cohort e.g. BCA3"><select id="c-t"></select><input id="c-sl" placeholder="Time" value="10:00 AM"><input id="c-d" placeholder="Days 1-6 e.g. 1,3,5" value="1,3,5"><button class="pri" id="c-add">Add class</button></div><div class="box" id="b-classes"></div></div>
+ <div id="v-enrollments" class="box" hidden></div>
+</div></div>
+<script type="module" src="fb-teacher.js"></script>
+<script type="module">
+const F=FBT.f,db=FBT.db,$=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let teachers=[],started=false;
+function live(col,box,cols,statuses,del){
+  box.dataset.col=col;
+  F.onSnapshot(F.collection(db,col),snap=>{
+    const rows=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1));
+    if(col==='teachers'){teachers=rows;fillT()}
+    box.innerHTML=rows.length?'<table><tr>'+cols.map(c=>'<th>'+c[0]+'</th>').join('')+(statuses?'<th>Status</th>':'')+(del?'<th></th>':'')+'</tr>'+rows.map(r=>'<tr>'+cols.map(c=>'<td>'+esc(typeof c[1]==='function'?c[1](r):r[c[1]])+'</td>').join('')+(statuses?'<td><select data-id="'+r.id+'">'+statuses.map(s=>'<option'+(s===r.status?' selected':'')+'>'+s+'</option>').join('')+'</select></td>':'')+(del?'<td><button data-del="'+r.id+'">Delete</button></td>':'')+'</tr>').join('')+'</table>':'<p class="m">Nothing here yet.</p>';
+  },e=>box.innerHTML='<p class="m">'+esc(e.code)+'</p>');
+}
+function fillT(){$('c-t').innerHTML=teachers.filter(t=>t.status==='approved').map(t=>'<option value="'+t.id+'">'+esc(t.name)+' ('+esc(t.empId)+')</option>').join('')}
+function start(){
+  if(started)return;started=true;
+  live('teachers',$('v-teachers'),[['Name','name'],['Emp ID','empId'],['Department','dept'],['Designation','designation']],['pending','approved','rejected','terminated'],true);
+  live('students',$('v-students'),[['Name','name'],['Roll','roll'],['Cohort','cohort']],['active','terminated'],true);
+  live('classes',$('b-classes'),[['Subject','subject'],['Cohort','cohort'],['Teacher','teacherName'],['Time','slot'],['Days','days']],null,true);
+  live('enrollments',$('v-enrollments'),[['Student','name'],['Roll','roll'],['Subject','subject'],['Cohort','cohort']],['pending','approved','rejected'],true);
+}
+const names={teachers:'Teachers',students:'Students',classes:'Classes',enrollments:'Enrollments'};
+$('tabs').innerHTML=Object.keys(names).map((k,i)=>'<button data-t="'+k+'"'+(i?'':' class="on"')+'>'+names[k]+'</button>').join('');
+$('tabs').onclick=e=>{const k=e.target.dataset.t;if(!k)return;
+  Object.keys(names).forEach(x=>{$('v-'+x).hidden=x!==k});
+  [...$('tabs').children].forEach(b=>b.classList.toggle('on',b.dataset.t===k))};
+document.addEventListener('change',e=>{const s=e.target;if(!s.dataset.id)return;
+  F.updateDoc(F.doc(db,s.closest('[data-col]').dataset.col,s.dataset.id),{status:s.value}).catch(x=>alert(x.code))});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-del]');if(!b||!confirm('Delete permanently?'))return;
+  F.deleteDoc(F.doc(db,b.closest('[data-col]').dataset.col,b.dataset.del)).catch(x=>alert(x.code))});
+$('c-add').onclick=()=>{
+  const t=teachers.find(x=>x.id===$('c-t').value),days=$('c-d').value.split(',').map(x=>+x.trim()).filter(x=>x>=1&&x<=6);
+  if(!$('c-s').value.trim()||!$('c-c').value.trim()||!t||!days.length)return alert('Fill subject, cohort, teacher and days');
+  F.addDoc(F.collection(db,'classes'),{subject:$('c-s').value.trim(),cohort:$('c-c').value.trim().toUpperCase(),slot:$('c-sl').value.trim(),days,teacherUid:t.id,teacherEmp:t.empId,teacherName:t.name,createdAt:F.serverTimestamp()}).then(()=>$('c-s').value='').catch(x=>alert(x.code));
+};
+$('login').onsubmit=e=>{e.preventDefault();$('err').textContent='';
+  if(!FBT.configured())return $('err').textContent='Add Firebase config in fb-teacher.js';
+  FBT.adminLogin($('em').value,$('pw').value).catch(()=>$('err').textContent='Sign in failed.')};
+$('out').onclick=()=>FBT.logout();
+FBT.admin(ok=>{$('login').hidden=ok;$('app').hidden=!ok;if(ok)start();else if(started)location.reload()});
+</script></body></html>

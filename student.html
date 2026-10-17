@@ -211,6 +211,8 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .tips .row{align-items:flex-start}
 .tips p{font-size:13px;color:var(--ink-2);margin-top:2px}
 </style>
+<script type="module" src="fb-teacher.js"></script>
+<script type="module" src="fb-manage.js"></script>
 </head>
 <body>
 <div class="app" id="app">
@@ -331,7 +333,7 @@ const cohortName=id=>(db().cohorts.find(c=>c.id===id)||{}).name||id;
 const teacherOf=id=>db().teachers.find(t=>t.id===id);
 const roster=classId=>{const c=getClass(classId);return db().students.filter(s=>s.cohort===c.cohort)};
 const classesOfTeacher=tid=>db().classes.filter(c=>c.teacherId===tid);
-const classesOfStudent=s=>db().classes.filter(c=>c.cohort===s.cohort);
+const classesOfStudent=s=>db().classes.filter(c=>c.cohort===s.cohort&&(!c.fb||(c.enr||[]).includes(s.id)));
 const getSession=id=>db().sessions.find(s=>s.id===id);
 const openSessionFor=classId=>db().sessions.find(s=>s.classId===classId&&s.status==='open');
 const sessionsOf=(classId,closedOnly=true)=>db().sessions.filter(s=>s.classId===classId&&(!closedOnly||s.status==='closed')).sort((a,b)=>b.startedAt-a.startedAt);
@@ -500,6 +502,11 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
 (function(){
   var me=CA.current('student');
   if(!me){location.replace('index.html');return}
+  if(me.user.fb){addEventListener('load',function(){
+    if(!window.FBT)return;
+    FBT.watch(function(ok){if(!ok){CA.logout();location.replace('index.html')}},'students','active');
+    if(window.FBM)FBM.student();
+  })}
   var U=me.user,ic=CA.icon,esc=CA.esc,$=function(id){return document.getElementById(id)};
   var S={view:'home',done:null,sheetCls:null,openSig:''};
   var classes=function(){return CA.classesOfStudent(U)};
@@ -613,7 +620,7 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     sub:function(el){openSubject(el.dataset.id)},
     done:function(){S.done=null;go('home')},
     theme:function(){CA.setTheme(CA.theme()==='dark'?'light':'dark');render()},
-    logout:function(){CA.logout();location.replace('index.html')}
+    logout:function(){CA.logout();var go=function(){location.replace('index.html')};window.FBT?FBT.logout().then(go,go):go()}
   };
   document.addEventListener('click',function(e){var el=e.target.closest('[data-act]');if(!el)return;var f=A[el.dataset.act];if(f)f(el,e)});
   document.addEventListener('input',function(e){
@@ -625,7 +632,7 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
   document.addEventListener('submit',function(e){
     if(e.target.id!=='mform')return;
     e.preventDefault();
-    var r=CA.submitCode(U.id,$('otp').value);
+    Promise.resolve(CA.submitCode(U.id,$('otp').value)).then(function(r){
     if(r.ok){S.done=r;render();window.scrollTo(0,0);return}
     var msg={
       format:'Enter all 6 digits.',
@@ -636,6 +643,7 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     }[r.reason]||'Something went wrong. Try again.';
     showErr(msg);
     if(r.reason==='already')fillStatus();
+    });
   });
 
   /* ---------------- live updates ---------------- */

@@ -230,7 +230,12 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .demo button.fill span{font-size:12px;color:var(--ink-2)}
 .foot-note{margin-top:22px;text-align:center;font-size:12px;color:var(--ink-3);line-height:1.6}
 .foot-note b{color:var(--ink-2)}
+
+[hidden]{display:none!important}
+.reglink{display:block;text-align:center;margin-top:14px;font-weight:600;font-size:13.5px;color:var(--ink-2);text-decoration:underline}
+.okmsg{padding:11px 13px;border-radius:12px;border:1px solid var(--ok);font-size:13.5px;line-height:1.4}
 </style>
+<script type="module" src="fb-teacher.js"></script>
 </head>
 <body>
 <div class="app">
@@ -269,6 +274,20 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
       </label>
       <p class="err" id="err" role="alert" hidden></p>
       <button class="btn" id="go" type="submit">Sign in</button>
+    </form>
+
+    <a href="#" class="reglink" id="regLink">New student? Register here</a>
+    <form class="form" id="regForm" novalidate hidden>
+      <label class="field"><span>Full name</span><div class="input-wrap"><span class="lead" data-i="user"></span><input class="input" name="name" type="text" placeholder="e.g. Dr. Rakesh Sharma"></div></label>
+      <label class="field"><span id="regIdLabel">Roll number</span><div class="input-wrap"><span class="lead" data-i="id"></span><input class="input" name="emp" type="text" autocapitalize="characters" placeholder="e.g. T2001"></div></label>
+      <label class="field" data-r="teacher" hidden><span>Department</span><div class="input-wrap"><span class="lead" data-i="book"></span><input class="input" name="dept" type="text" value="Department of Computer Science"></div></label>
+      <label class="field" data-r="teacher" hidden><span>Designation</span><div class="input-wrap"><span class="lead" data-i="book"></span><input class="input" name="desg" type="text" placeholder="e.g. Assistant Professor"></div></label>
+      <label class="field" data-r="student"><span>Cohort (course + semester)</span><div class="input-wrap"><span class="lead" data-i="book"></span><input class="input" name="cohort" type="text" autocapitalize="characters" placeholder="e.g. BCA3 or MCA1"></div></label>
+      <label class="field"><span>Password</span><div class="input-wrap"><span class="lead" data-i="lock"></span><input class="input" name="p1" type="password" autocomplete="new-password" placeholder="Min 6 characters"></div></label>
+      <label class="field"><span>Confirm password</span><div class="input-wrap"><span class="lead" data-i="lock"></span><input class="input" name="p2" type="password" autocomplete="new-password" placeholder="Repeat password"></div></label>
+      <p class="err" id="rerr" role="alert" hidden></p>
+      <p class="okmsg" id="rok" hidden></p>
+      <button class="btn" id="regGo" type="submit">Submit for approval</button>
     </form>
 
     <details class="demo" id="demo">
@@ -577,12 +596,42 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
   var uid=$('uid'),pw=$('pw'),err=$('err'),eye=$('eye'),go=$('go'),form=$('form');
   eye.innerHTML=CA.icon('eye',20);
 
+  /* ---- teacher registration (Firebase, needs approval) ---- */
+  var reg=$('regForm'),regLink=$('regLink'),rerr=$('rerr'),rok=$('rok');
+  regLink.addEventListener('click',function(e){
+    e.preventDefault();var open=reg.hidden;reg.hidden=!open;form.hidden=open;
+    regLink.textContent=open?'Back to sign in':(role==='teacher'?'New teacher? Register here':'New student? Register here');
+    rerr.hidden=true;rok.hidden=true;
+  });
+  reg.addEventListener('submit',function(e){
+    e.preventDefault();rerr.hidden=true;rok.hidden=true;
+    var f=function(n){return reg.elements[n].value.trim()};
+    var name=f('name'),emp=f('emp').toUpperCase(),dept=f('dept'),desg=f('desg'),cohort=f('cohort').toUpperCase(),p1=reg.elements.p1.value,p2=reg.elements.p2.value;
+    function bad(m){rerr.innerHTML=CA.icon('alert',18)+'<span>'+CA.esc(m)+'</span>';rerr.hidden=false}
+    if(!name||!emp||(role==='teacher'?!dept||!desg:!cohort))return bad('Please fill in all the details.');
+    if(!/^[A-Z0-9._-]{3,20}$/.test(emp))return bad('Employee ID: 3-20 letters or numbers only.');
+    if(p1.length<6)return bad('Password must be at least 6 characters.');
+    if(p1!==p2)return bad('Passwords do not match.');
+    if(CA.db()[role==='teacher'?'teachers':'students'].some(function(t){return t.id.toLowerCase()===emp.toLowerCase()}))return bad('This Employee ID is already in use.');
+    if(!window.FBT||!FBT.configured())return bad('Firebase is not set up yet (add config in fb-teacher.js and open the site from a server).');
+    var b=$('regGo');b.disabled=true;b.textContent='Submitting…';
+    (role==='teacher'?FBT.register({name:name,empId:emp,dept:dept,designation:desg,password:p1}):FBT.registerStudent({name:name,roll:emp,cohort:cohort,password:p1})).then(function(){
+      reg.reset();rok.textContent=role==='teacher'?'Request submitted. Status: Pending. You can sign in once it is approved.':'Registered. Sign in, open Subjects and request each subject; its teacher will approve.';rok.hidden=false;
+    }).catch(function(x){
+      bad(x&&x.code==='auth/email-already-in-use'?'This Employee ID is already registered.':'Could not register: '+((x&&x.code)||x));
+    }).then(function(){b.disabled=false;b.textContent='Submit for approval'});
+  });
+
   function setRole(r){
     role=r;
     ['student','teacher'].forEach(function(x){var b=$('tab-'+x);b.classList.toggle('on',x===r);b.setAttribute('aria-selected',x===r)});
     $('idLabel').textContent=r==='student'?'Roll number':'Employee ID';
     uid.placeholder=r==='student'?'e.g. BCA23001':'e.g. T1001';
     err.hidden=true;
+    $('regForm').hidden=true;form.hidden=false;
+    $('regLink').textContent=r==='teacher'?'New teacher? Register here':'New student? Register here';
+    $('regIdLabel').textContent=r==='teacher'?'Employee ID':'Roll number';
+    document.querySelectorAll('#regForm [data-r]').forEach(function(n){n.hidden=n.dataset.r!==r});
   }
   document.querySelectorAll('.seg [data-role]').forEach(function(b){b.addEventListener('click',function(){setRole(b.dataset.role)})});
   document.querySelectorAll('.fill').forEach(function(b){b.addEventListener('click',function(){setRole(b.dataset.role);uid.value=b.dataset.id;pw.value=b.dataset.pw;pw.focus()})});
@@ -599,9 +648,27 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     e.preventDefault();
     if(!uid.value.trim()||!pw.value){fail('Please enter your '+(role==='student'?'roll number':'employee ID')+' and password.');return}
     var u=CA.login(role,uid.value,pw.value);
-    if(!u){fail('Incorrect ID or password. Check the demo credentials below.');return}
-    err.hidden=true;go.disabled=true;go.textContent='Signing in…';
-    setTimeout(function(){location.href=role==='teacher'?'teacher.html':'student.html'},350);
+    var dest=role==='teacher'?'teacher.html':'student.html';
+    if(u){err.hidden=true;go.disabled=true;go.textContent='Signing in…';setTimeout(function(){location.href=dest},350);return}
+    if(!window.FBT||!FBT.configured()){fail('Incorrect ID or password. Check the demo credentials below.');return}
+    go.disabled=true;go.textContent='Signing in…';
+    (role==='teacher'?FBT.login:FBT.loginStudent)(uid.value,pw.value).then(function(p){
+      var d=CA.db(),id=uid.value.trim().toUpperCase(),key=role==='teacher'?'teachers':'students';
+      var t=d[key].find(function(x){return x.id.toLowerCase()===id.toLowerCase()});
+      if(t&&!t.fb)throw{code:'clash'};
+      var rec=role==='teacher'?{id:id,name:p.name,designation:p.designation,dept:p.dept,pass:'',fb:true}:{id:id,name:p.name,cohort:p.cohort,pass:'',fb:true};
+      if(!t){d[key].push(rec);CA.save()}else if(role==='student'&&t.cohort!==p.cohort){t.cohort=p.cohort;CA.save()}
+      localStorage.setItem('campusattend.session.v1',JSON.stringify({role:role,id:t?t.id:id,t:Date.now()}));
+      location.href=dest;
+    }).catch(function(x){
+      go.disabled=false;go.textContent='Sign in';
+      var st=x&&x.status,c=x&&x.code;
+      fail(st==='rejected'?'Your registration was rejected. Contact the department.':
+        st==='terminated'?'Your account has been terminated. Contact the department.':
+        c==='status'?'Your request is still pending approval.':
+        c==='clash'?'This Employee ID is reserved.':
+        'Incorrect ID or password.');
+    });
   });
 })();
 </script>
