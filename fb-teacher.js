@@ -61,3 +61,5 @@ window.FBT={
   },
   logout:()=>signOut(auth)
 };
+
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
