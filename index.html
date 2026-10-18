@@ -255,6 +255,7 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 <script type="module" src="fb-teacher.js"></script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
+<script src="fb-guard.js"></script>
 </head>
 <body>
 <div id="splash" aria-hidden="true"><div class="sp-in">
@@ -661,6 +662,12 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     });
   });
 })();
+</script>
+<script>
+GUARD.declare('login');GUARD.foot('login',document.querySelector('main.panel'));
+GUARD.protect([
+ {sel:'#regForm',type:'submit',cfg:{title:'Submit registration',warn:'Check your name, ID and cohort. A wrong ID or cohort can delay approval and attendance records cannot be moved easily.',decl:'I declare that all details I entered are true and belong to me.',disc:'Disclaimer: false details can lead to rejection or termination of your account.',ok:'Submit registration'}}
+]);
 </script>
 </body>
 </html>

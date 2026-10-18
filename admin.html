@@ -53,6 +53,12 @@ textarea.in{padding:10px 12px;min-height:90px;resize:vertical}
 #login{max-width:360px;margin:12vh auto;padding:0 16px;display:grid;gap:12px}#login h1{font-size:22px}#err{color:var(--bad);font-size:13.5px;min-height:18px}
 .toasts{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 20px);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;z-index:50;padding:0 16px}
 .toast{background:#241816;color:#fff;border-radius:14px;padding:11px 16px;font-weight:600;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}.toast.bad{background:#7d1812}
+.ov{position:fixed;inset:0;z-index:60;background:rgba(20,8,6,.55);display:grid;place-items:center;padding:16px;overflow:auto}
+.dlg{background:var(--s);border-radius:20px;padding:18px;max-width:440px;width:100%;display:grid;gap:10px;box-shadow:var(--sh)}
+.dlg h3{font-size:17px}.dlg .wn{background:var(--warns);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:13.5px;font-weight:600}.dlg .wn.bad{background:var(--bads);color:var(--bad)}
+.dlg ul{margin:0 0 0 18px;font-size:13.5px;color:var(--ink2)}.dlg .dis{font-size:12px;color:var(--ink3);line-height:1.4}
+.dlg .ck{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;font-weight:600}.dlg .ck input{margin-top:3px;width:18px;height:18px;flex:none}
+.dlg .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head><body>
 <form id="login"><h1>Admin sign in</h1><p style="color:var(--ink2)">CampusAttend · CSJMU Kanpur</p><input class="in" id="em" type="email" placeholder="Email" autocomplete="username" required><input class="in" id="pw" type="password" placeholder="Password" autocomplete="current-password" required><button class="b p" style="min-height:46px">Sign in</button><div id="err" role="alert"></div></form>
@@ -62,13 +68,14 @@ textarea.in{padding:10px 12px;min-height:90px;resize:vertical}
   <main id="main"></main>
 </div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
+<script src="fb-guard.js"></script>
 <script type="module" src="fb-teacher.js"></script>
 <script type="module">
 const F=FBT.f,db=FBT.db,$=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const D={teachers:[],students:[],classes:[],enrollments:[],cohorts:[],announcements:[]};
 const S={tab:'overview',q:'',f:'all'},DAYS=['','Mon','Tue','Wed','Thu','Fri','Sat'];
-let started=false,cur=null,errCode='';
+let started=false,cur=null,errCode='',LIVE=[],liveErr='',lastSig='';
 const ST={pending:'warn',approved:'ok',active:'ok',rejected:'bad',terminated:'bad'};
 const chip=s=>'<span class="chip '+(ST[s]||'')+'">'+esc(s)+'</span>';
 const ini=n=>String(n||'?').replace(/^(Dr|Prof)\.?\s+/i,'').split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
@@ -87,6 +94,48 @@ const fchips=(arr)=>'<div class="fchips">'+arr.map(a=>'<button data-f="'+a+'" cl
 const cohortOpts=(all)=>(all?'<option value="all">All cohorts</option>':'<option value="">Select cohort</option>')+D.cohorts.map(c=>'<option value="'+esc(c.id)+'"'+(S.f===c.id?' selected':'')+'>'+esc(c.name||c.id)+'</option>').join('');
 const nStu=c=>D.students.filter(s=>s.cohort===c&&s.status==='active').length;
 const ms=a=>a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():0;
+const mins=t=>{const m=/(\d+):(\d+)\s*(AM|PM)/i.exec(t||'');return m?((+m[1]%12)+(/PM/i.test(m[3])?12:0))*60+ +m[2]:0};
+const to12=v=>{const a=String(v||'10:00').split(':').map(Number);return((a[0]%12)||12)+':'+String(a[1]||0).padStart(2,'0')+' '+(a[0]<12?'AM':'PM')};
+const FULL=['','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const loadScript=(u,g)=>new Promise((ok,no)=>{if(window[g])return ok();const x=document.createElement('script');x.src=u;x.onload=ok;x.onerror=()=>no(new Error('Could not load library. Check internet.'));document.head.appendChild(x)});
+const csvOut=rows=>rows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+const dl=(n,t)=>{const b=new Blob(['\ufeff'+t],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},600)};
+async function pdf(o){
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','jspdf');
+  const d=new window.jspdf.jsPDF({unit:'pt',format:'a4'}),W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),M=40;let y=M+6;
+  d.setFont('helvetica','bold');d.setFontSize(16);d.setTextColor(168,29,22);d.text(o.title,M,y);y+=20;
+  d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(90,90,90);(o.sub||[]).forEach(l=>{d.text(l,M,y);y+=14});y+=10;
+  const t=o.table,cw=t.w.map(x=>x*(W-2*M)),row=(c,hd,z,low)=>{
+    if(y>H-M){d.addPage();y=M}
+    if(hd){d.setFillColor(168,29,22);d.rect(M,y-12,W-2*M,19,'F');d.setTextColor(255,255,255);d.setFont('helvetica','bold')}
+    else{if(z){d.setFillColor(246,243,242);d.rect(M,y-12,W-2*M,19,'F')}d.setTextColor(low?179:30,low?38:30,low?30:30);d.setFont('helvetica','normal')}
+    d.setFontSize(9.5);let x=M+5;c.forEach((v,i)=>{d.text(String(v),x,y+1,{maxWidth:cw[i]-8});x+=cw[i]});y+=19};
+  row(t.head,true);t.rows.forEach((r,i)=>row(r,false,i%2===0,t.low&&t.low(r)));
+  const n=d.getNumberOfPages();for(let i=1;i<=n;i++){d.setPage(i);d.setFontSize(8);d.setTextColor(140,140,140);d.text('CampusAttend · CSJMU Kanpur · Page '+i+' of '+n,M,H-18)}
+  d.save(o.name)}
+const run=async(fn)=>{try{await fn()}catch(e){fail(e)}};
+const pull=async ids=>{const out=[];await Promise.all(ids.map(async id=>(await F.getDocs(F.query(F.collection(db,'history'),F.where('classId','==',id)))).docs.forEach(d=>out.push(d.data()))));return out};
+const nameOf=r=>(D.students.find(s=>s.roll===r)||{}).name||'';
+const pc=(p,t)=>t?Math.round(p*1000/t)/10:0;
+async function classData(cid,a,b){
+  const c=D.classes.find(x=>x.id===cid),h=(await pull([cid])).filter(x=>(!a||x.date>=a)&&(!b||x.date<=b));
+  const sm=new Map();h.forEach(x=>sm.set(x.sessionId,{id:x.sessionId,date:x.date,at:x.startedAt||0}));
+  const sess=[...sm.values()].sort((x,y)=>x.at-y.at);
+  const rolls=[...new Set(D.enrollments.filter(e=>e.classId===cid&&e.status==='approved').map(e=>e.roll).concat(h.map(x=>x.roll)))].sort((x,y)=>x.localeCompare(y,undefined,{numeric:true}));
+  const rows=rolls.map(r=>{const mine=h.filter(x=>x.roll===r),p=mine.filter(x=>x.status==='P').length;
+    return{roll:r,name:nameOf(r),p,t:mine.length,pct:pc(p,mine.length),cells:sess.map(s=>{const m=mine.find(x=>x.sessionId===s.id);return m?m.status:'-'})}});
+  return{c,sess,rows}}
+async function cohortData(co){
+  const cl=D.classes.filter(x=>x.cohort===co),h=await pull(cl.map(x=>x.id));
+  const rolls=[...new Set(D.students.filter(s=>s.cohort===co&&s.status==='active').map(s=>s.roll).concat(h.filter(x=>cl.some(c=>c.id===x.classId)).map(x=>x.roll)))].sort((x,y)=>x.localeCompare(y,undefined,{numeric:true}));
+  const rows=rolls.map(r=>{let P=0,T=0;const cells=cl.map(c=>{const m=h.filter(x=>x.roll===r&&x.classId===c.id),p=m.filter(x=>x.status==='P').length;P+=p;T+=m.length;return p+'/'+m.length});return{roll:r,name:nameOf(r),cells,pct:pc(P,T),P,T}});
+  return{cl,rows}}
+const ttC=()=>S.f!=='all'?S.f:(D.cohorts[0]||{}).id;
+const ttRows=co=>{const r=[];for(let d=1;d<=6;d++)D.classes.filter(c=>c.cohort===co&&(c.days||[]).includes(d)).sort((x,y)=>mins(x.slot)-mins(y.slot)).forEach(c=>r.push([FULL[d],c.slot,c.subject,c.teacherName]));return r};
+const sig=()=>LIVE.filter(s=>s.expiresAt>Date.now()).map(s=>s.id+s.code).join();
+function after(){const els=[...document.querySelectorAll('.qr[data-code]')];if(!els.length)return;
+  loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js','QRCode').then(()=>els.forEach(el=>{if(el.dataset.done===el.dataset.code)return;el.innerHTML='';new QRCode(el,{text:el.dataset.code,width:170,height:170,correctLevel:QRCode.CorrectLevel.M});el.dataset.done=el.dataset.code})).catch(()=>{})}
+
 
 const V={
 overview(){
@@ -112,7 +161,7 @@ students(){
 },
 classes(){
   const ap=D.teachers.filter(t=>t.status==='approved');
-  return{tools:'<div class="form"><h2>Add a class</h2><div class="two"><label><span>Subject</span><input class="in" id="c-s" placeholder="e.g. Data Structures"></label><label><span>Cohort</span><select class="in" id="c-c">'+cohortOpts()+'</select></label><label><span>Teacher</span><select class="in" id="c-t"><option value="">Select teacher</option>'+ap.map(t=>'<option value="'+t.id+'">'+esc(t.name)+' ('+esc(t.empId)+')</option>').join('')+'</select></label><label><span>Time</span><input class="in" id="c-sl" value="10:00 AM"></label></div><div><div style="font-size:12.5px;font-weight:600;color:var(--ink2);margin:0 0 6px 2px">Days</div><div class="fchips" id="c-d">'+[1,2,3,4,5,6].map(i=>'<label class="dc"><input type="checkbox" value="'+i+'"><span>'+DAYS[i]+'</span></label>').join('')+'</div></div>'+B('data-do="addClass"','Add class','p')+'</div>',
+  return{tools:'<div class="form"><h2>Add a class</h2><div class="two"><label><span>Subject</span><input class="in" id="c-s" placeholder="e.g. Data Structures"></label><label><span>Cohort</span><select class="in" id="c-c">'+cohortOpts()+'</select></label><label><span>Teacher</span><select class="in" id="c-t"><option value="">Select teacher</option>'+ap.map(t=>'<option value="'+t.id+'">'+esc(t.name)+' ('+esc(t.empId)+')</option>').join('')+'</select></label><label><span>Time</span><input class="in" id="c-sl" type="time" value="10:00"></label></div><div><div style="font-size:12.5px;font-weight:600;color:var(--ink2);margin:0 0 6px 2px">Days</div><div class="fchips" id="c-d">'+[1,2,3,4,5,6].map(i=>'<label class="dc"><input type="checkbox" id="cd'+i+'" value="'+i+'"><span>'+DAYS[i]+'</span></label>').join('')+'</div></div>'+B('data-do="addClass"','Add class','p')+'</div>',
   list:()=>D.classes.length?'<div class="grid">'+D.classes.map(c=>card(c.subject,cname(c.cohort)+' · '+c.teacherName+' · '+c.slot+' · '+(c.days||[]).map(x=>DAYS[x]).join(', '),'',delB('classes',c.id))).join('')+'</div>':empty('No classes yet','Add the first class above.')};
 },
 enrollments(){
@@ -121,8 +170,24 @@ enrollments(){
     return r.length?'<div class="grid">'+r.map(e=>card(e.name,e.roll+' · '+e.subject+' · '+cname(e.cohort),e.status,(e.status!=='approved'?setB('enrollments',e.id,'approved','Approve','ok'):'')+(e.status!=='rejected'?setB('enrollments',e.id,'rejected','Reject','d'):'')+delB('enrollments',e.id))).join('')+'</div>':empty('No requests','Subject requests from students show up here.')}};
 },
 cohorts(){
-  return{tools:'<div class="form"><h2>Add a cohort</h2><div class="two"><label><span>Code</span><input class="in" id="co-c" placeholder="e.g. BCA3" autocapitalize="characters" maxlength="12"></label><label><span>Display name (optional)</span><input class="in" id="co-n" placeholder="e.g. BCA Semester 3"></label></div>'+B('data-do="addCohort"','Add cohort','p')+'</div>',
+  return{tools:'<div class="form"><h2>Add a cohort</h2><div class="two"><label><span>Course</span><select class="in" id="co-k"><option value="">Select course</option>'+[...new Set(D.cohorts.map(c=>(/^[A-Z]+/.exec(c.id)||[''])[0]).filter(Boolean))].sort().map(k=>'<option value="'+esc(k)+'">'+esc(k)+'</option>').join('')+'<option value="__new">+ New course</option></select></label><label><span>Semester</span><select class="in" id="co-s"><option value="">Select semester</option>'+[1,2,3,4,5,6,7,8].map(i=>'<option value="'+i+'">Semester '+i+'</option>').join('')+'</select></label></div><label id="co-nw" hidden><span>New course code (letters only)</span><input class="in" id="co-n" placeholder="e.g. BCA" autocapitalize="characters" maxlength="8"></label>'+B('data-do="addCohort"','Add cohort','p')+'</div>',
   list:()=>D.cohorts.length?'<div class="grid">'+D.cohorts.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})).map(c=>card(c.name||c.id,c.id+' · '+nStu(c.id)+' students · '+D.classes.filter(x=>x.cohort===c.id).length+' classes','',delB('cohorts',c.id))).join('')+'</div>':empty('No cohorts yet','Students will choose from this list when they register.')};
+},
+reports(){
+  const cl=D.classes.slice().sort((a,b)=>(cname(a.cohort)+a.subject).localeCompare(cname(b.cohort)+b.subject)).map(c=>'<option value="'+esc(c.id)+'">'+esc(c.subject+' — '+cname(c.cohort))+'</option>').join('');
+  return{tools:'<div class="form"><h2>Class report</h2><label><span>Class</span><select class="in" id="r-cl"><option value="">Select class</option>'+cl+'</select></label><div class="two"><label><span>From (optional)</span><input class="in" id="r-a" type="date"></label><label><span>To (optional)</span><input class="in" id="r-b" type="date"></label></div><div class="acts">'+B('data-do="repCsv"','Download CSV','p')+B('data-do="repPdf"','Download PDF')+'</div></div><div class="form"><h2>Cohort summary</h2><p style="color:var(--ink2);font-size:13.5px">All subjects of one cohort. One row per student, present/total for each subject.</p><label><span>Cohort</span><select class="in" id="r-co">'+cohortOpts()+'</select></label><div class="acts">'+B('data-do="coCsv"','Download CSV','p')+B('data-do="coPdf"','Download PDF')+'</div></div>',list:()=>''};
+},
+timetable(){
+  return{tools:'<div class="tools"><select class="in" id="fs" aria-label="Cohort">'+D.cohorts.map(x=>'<option value="'+esc(x.id)+'"'+(x.id===ttC()?' selected':'')+'>'+esc(x.name||x.id)+'</option>').join('')+'</select>'+B('data-do="ttPdf"','Download PDF','p')+'</div>',
+  list:()=>{const co=ttC();if(!co)return empty('No cohorts yet','Add a cohort and its classes first.');
+    return[1,2,3,4,5,6].map(d=>{const r=D.classes.filter(c=>c.cohort===co&&(c.days||[]).includes(d)).sort((a,b)=>mins(a.slot)-mins(b.slot));
+      return r.length?'<div class="sect">'+FULL[d]+'</div><div class="grid">'+r.map(c=>card(c.subject,c.slot+' · '+c.teacherName,'','')).join('')+'</div>':''}).join('')||empty('No classes','This cohort has no classes yet.')}};
+},
+codes(){
+  lastSig=sig();const L=LIVE.filter(s=>s.expiresAt>Date.now());
+  return{tools:liveErr?'<div class="warnbox">Could not read live sessions ('+esc(liveErr)+'). Allow admin to read the sessions collection in Firestore rules.</div>':'',
+  list:()=>L.length?'<div class="grid">'+L.map(s=>{const c=D.classes.find(x=>x.id===s.classId)||{};
+    return'<div class="card note" style="flex-direction:column;align-items:flex-start"><div><b>'+esc(c.subject||'Class')+'</b><small>'+esc(cname(c.cohort))+' · '+esc(c.teacherName||'')+'</small></div>'+(s.code?'<div class="qr" data-code="'+esc(s.code)+'" style="background:#fff;padding:10px;border-radius:14px;align-self:center"></div><div style="align-self:center;font-size:30px;font-weight:800;letter-spacing:.14em">'+esc(String(s.code).slice(0,3)+' '+String(s.code).slice(3))+'</div>':'<p>Code is being generated…</p>')+'</div>'}).join('')+'</div>':empty('No live session','When a teacher starts attendance, its code and QR appear here.')};
 },
 notices(){
   return{tools:'<div class="form"><h2>Post an announcement</h2><label><span>Send to</span><select class="in" id="n-c"><option value="ALL">Everyone</option>'+D.cohorts.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name||c.id)+'</option>').join('')+'</select></label><label><span>Title</span><input class="in" id="n-t" maxlength="80"></label><label><span>Message</span><textarea class="in" id="n-m" maxlength="500"></textarea></label>'+B('data-do="post"','Post announcement','p')+'</div>',
@@ -133,45 +198,97 @@ promote(){
   return{tools:'<div class="form"><h2>Semester-end promotion</h2><p style="color:var(--ink2);font-size:13.5px">Move every active student of one cohort to the next. Old attendance records stay safe. Students then request their new subjects.</p><div class="two"><label><span>From cohort</span><select class="in" id="p-f"><option value="">Select</option>'+opts+'</select></label><label><span>Move to</span><select class="in" id="p-t"><option value="">Select</option>'+D.cohorts.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name||c.id)+'</option>').join('')+'<option value="__out">Passed out (disable login)</option></select></label></div><div id="p-info" style="font-size:13.5px;color:var(--ink2)"></div>'+B('data-do="promote"','Promote students','p')+'</div>',list:()=>''};
 }
 };
-const TABS=[['overview','Overview'],['teachers','Teachers'],['students','Students'],['classes','Classes'],['enrollments','Requests'],['cohorts','Cohorts'],['notices','Announcements'],['promote','Promotion']];
+const TABS=[['overview','Overview'],['teachers','Teachers'],['students','Students'],['classes','Classes'],['enrollments','Requests'],['cohorts','Cohorts'],['timetable','Timetable'],['reports','Reports'],['codes','Live codes'],['notices','Announcements'],['promote','Promotion']];
 function render(full){
   const badge={teachers:D.teachers.filter(t=>t.status==='pending').length,enrollments:D.enrollments.filter(e=>e.status==='pending').length};
   $('tabs').innerHTML=TABS.map(t=>'<button data-tab="'+t[0]+'" class="'+(S.tab===t[0]?'on':'')+'">'+t[1]+(badge[t[0]]?'<i class="dot">'+badge[t[0]]+'</i>':'')+'</button>').join('');
   const a=document.activeElement,typing=a&&$('main').contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName);
   cur=V[S.tab]();
-  if(typing&&!full){const l=$('list');if(l)l.innerHTML=cur.list();return}
-  $('main').innerHTML=cur.tools+'<div id="list">'+cur.list()+'</div>';
+  if(typing&&!full){const l=$('list');if(l)l.innerHTML=cur.list();after();return}
+  const keep={};if(!full)$('main').querySelectorAll('input[id],textarea[id],select[id]').forEach(n=>{if(n.id!=='q')keep[n.id]=n.type==='checkbox'?n.checked:n.value});
+  $('main').innerHTML=cur.tools+'<div id="list">'+cur.list()+'</div><p class="gd-foot">'+GUARD.text('admin')+'</p>';
+  Object.keys(keep).forEach(k=>{const n=$(k);if(!n)return;if(n.type==='checkbox')n.checked=keep[k];else n.value=keep[k]});
+  after();
 }
 function start(){
-  if(started)return;started=true;
+  if(started)return;started=true;GUARD.declare('admin');
+  F.onSnapshot(F.query(F.collection(db,'sessions'),F.where('status','==','open')),s=>{LIVE=s.docs.map(d=>({id:d.id,...d.data()}));liveErr='';if(S.tab==='codes')render()},e=>{liveErr=e.code;if(S.tab==='codes')render()});
+  setInterval(()=>{if(S.tab==='codes'&&sig()!==lastSig)render()},5000);
   Object.keys(D).forEach(c=>F.onSnapshot(F.collection(db,c),s=>{D[c]=s.docs.map(d=>({id:d.id,...d.data()}));render()},e=>{errCode=e.code;render()}));
 }
 const upd=(col,id,data)=>F.updateDoc(F.doc(db,col,id),data).catch(fail);
 const val=id=>$(id).value.trim();
+
+const DISC='Disclaimer: this change is saved to the live database immediately and is visible to teachers and students. It is not undone automatically. Student data is confidential; use it only for official college work.';
+const ask=o=>new Promise(res=>{
+  const h=document.createElement('div');h.className='ov';
+  h.innerHTML='<div class="dlg" role="alertdialog" aria-modal="true" aria-label="'+esc(o.title)+'"><h3>'+esc(o.title)+'</h3><p class="wn'+(o.danger?' bad':'')+'">'+esc(o.warn)+'</p>'+(o.items&&o.items.length?'<ul>'+o.items.map(i=>'<li>'+esc(i)+'</li>').join('')+'</ul>':'')+'<p class="dis">'+esc(o.disc||DISC)+'</p><label class="ck"><input type="checkbox" id="ak"><span>I declare that I am the authorised admin, I have checked the details above, and I want to continue.</span></label><div class="row"><button class="b" data-n>Cancel</button><button class="b '+(o.danger?'d':'p')+'" data-y disabled>'+esc(o.ok||'Confirm')+'</button></div></div>';
+  const end=v=>{h.remove();res(v)},y=h.querySelector('[data-y]');
+  h.addEventListener('change',e=>{if(e.target.id==='ak')y.disabled=!e.target.checked});
+  h.addEventListener('click',e=>{if(e.target.closest('[data-y]'))end(true);else if(e.target.closest('[data-n]')||e.target===h)end(false)});
+  document.body.appendChild(h);h.querySelector('#ak').focus()});
+const MSG={
+ 'teachers:approved':['Approve teacher','This teacher will be able to sign in, take attendance and see students of their classes.',0],
+ 'teachers:rejected':['Reject teacher','This registration will be rejected and the teacher will not be able to sign in.',1],
+ 'teachers:terminated':['Terminate teacher','The teacher loses access immediately and cannot take attendance. Old attendance records stay in the database.',1],
+ 'students:terminated':['Disable student login','The student cannot sign in until you enable the login again.',1],
+ 'students:active':['Enable student login','The student will be able to sign in and mark attendance again.',0],
+ 'enrollments:approved':['Approve subject request','The student will be counted in this subject and its attendance will start.',0],
+ 'enrollments:rejected':['Reject subject request','The student will not be counted in this subject.',1]};
+const nm=(col,id)=>{const r=D[col].find(x=>x.id===id)||{};return r.name||r.subject||r.title||id};
+async function gateSet(col,id,st){const m=MSG[col+':'+st]||['Change status','This will change the status to '+st+'.',0];
+  if(await ask({title:m[0],warn:m[1],danger:m[2],items:['Record: '+nm(col,id),'New status: '+st],ok:'Yes, '+m[0].toLowerCase()}))upd(col,id,{status:st})}
+const DL={repCsv:'class report (CSV)',repPdf:'class report (PDF)',coCsv:'cohort summary (CSV)',coPdf:'cohort summary (PDF)',ttPdf:'timetable (PDF)'};
+async function gateDel(col,id){
+  if(col==='cohorts'&&(nStu(id)||D.classes.some(x=>x.cohort===id)))return toast('This cohort still has students or classes. Move them first.',1);
+  const kind={teachers:'teacher',students:'student',classes:'class',enrollments:'subject request',cohorts:'cohort',announcements:'announcement'}[col]||'record';
+  if(await ask({title:'Delete '+kind+' permanently',danger:1,warn:'This '+kind+' will be erased from the database and cannot be recovered. Only admins can do this.',items:['Record: '+nm(col,id)].concat(col==='teachers'||col==='students'?['The person loses access; their old attendance records stay.']:[]),ok:'Yes, delete permanently'}))F.deleteDoc(F.doc(db,col,id)).catch(fail)}
+async function gate(k){
+  if(DL[k]){const rep=k!=='ttPdf';if(!await ask({title:'Download '+DL[k],warn:rep?'This file contains student names, roll numbers and attendance. Keep it safe and do not share it outside the college.':'This file will be saved to your device.',items:['The file is created on your device from live data.'],disc:rep?'Disclaimer: attendance data is confidential. Sharing it with unauthorised people may break college rules and privacy laws.':'Disclaimer: the timetable shows data as it is now in the database.',ok:'Download'}))return}
+  DO[k]()}
 const DO={
-  approveAll(){const p=D.teachers.filter(t=>t.status==='pending');if(!p.length||!confirm('Approve '+p.length+' teacher'+(p.length===1?'':'s')+'?'))return;
+  repCsv:()=>run(async()=>{const id=val('r-cl');if(!id)return toast('Select a class',1);const r=await classData(id,val('r-a'),val('r-b'));if(!r.rows.length)return toast('No attendance records found',1);
+    dl('Attendance_'+r.c.subject.replace(/\W+/g,'_')+'.csv',csvOut([['Roll No','Name','Present','Total','Percentage'].concat(r.sess.map(x=>x.date))].concat(r.rows.map(x=>[x.roll,x.name,x.p,x.t,x.t?x.pct:''].concat(x.cells)))));toast('CSV downloaded')}),
+  repPdf:()=>run(async()=>{const id=val('r-cl'),a=val('r-a'),b=val('r-b');if(!id)return toast('Select a class',1);const r=await classData(id,a,b);if(!r.rows.length)return toast('No attendance records found',1);
+    await pdf({name:'Attendance_'+r.c.subject.replace(/\W+/g,'_')+'.pdf',title:r.c.subject+' · Attendance report',sub:[cname(r.c.cohort)+' · '+r.rows.length+' students · '+r.sess.length+' sessions'+(a||b?' · '+(a||'start')+' to '+(b||'today'):''),'Teacher: '+r.c.teacherName+' · Generated '+new Date().toLocaleDateString('en-GB')],
+      table:{head:['Roll No','Name','Present','Total','%'],w:[.2,.4,.13,.13,.14],rows:r.rows.map(x=>[x.roll,x.name,x.p,x.t,x.t?x.pct+'%':'-']),low:x=>parseFloat(x[4])<75}});toast('PDF downloaded')}),
+  coCsv:()=>run(async()=>{const co=val('r-co');if(!co)return toast('Select a cohort',1);const r=await cohortData(co);if(!r.rows.length)return toast('No students found',1);
+    dl('Cohort_'+co+'.csv',csvOut([['Roll No','Name'].concat(r.cl.map(c=>c.subject),['Overall %'])].concat(r.rows.map(x=>[x.roll,x.name].concat(x.cells,[x.P+x.T?x.pct:''])))));toast('CSV downloaded')}),
+  coPdf:()=>run(async()=>{const co=val('r-co');if(!co)return toast('Select a cohort',1);const r=await cohortData(co);if(!r.rows.length)return toast('No students found',1);
+    const k=r.cl.length,w=[.14,.26].concat(Array(k).fill(.5/Math.max(k,1)),[.1]);
+    await pdf({name:'Cohort_'+co+'.pdf',title:cname(co)+' · Attendance summary',sub:[r.rows.length+' students · '+k+' subjects · Generated '+new Date().toLocaleDateString('en-GB')],
+      table:{head:['Roll','Name'].concat(r.cl.map(c=>c.subject.slice(0,10)),['Overall']),w,rows:r.rows.map(x=>[x.roll,x.name].concat(x.cells,[x.P+x.T?x.pct+'%':'-'])),low:x=>parseFloat(x[x.length-1])<75}});toast('PDF downloaded')}),
+  ttPdf:()=>run(async()=>{const co=ttC(),r=ttRows(co);if(!r.length)return toast('No classes to export',1);
+    await pdf({name:'Timetable_'+co+'.pdf',title:cname(co)+' · Weekly timetable',sub:['CampusAttend · CSJMU Kanpur'],table:{head:['Day','Time','Subject','Teacher'],w:[.18,.16,.38,.28],rows:r}});toast('PDF downloaded')}),
+  async approveAll(){const p=D.teachers.filter(t=>t.status==='pending');if(!p.length)return;
+    if(!await ask({title:'Approve all pending teachers',warn:'All '+p.length+' pending teacher'+(p.length===1?'':'s')+' will get full teacher access at once. Check each name first.',items:p.slice(0,8).map(t=>t.name+' ('+t.empId+')').concat(p.length>8?['and '+(p.length-8)+' more']:[]),ok:'Approve all '+p.length}))return;
     const b=F.writeBatch(db);p.forEach(t=>b.update(F.doc(db,'teachers',t.id),{status:'approved'}));b.commit().then(()=>toast(p.length+' approved')).catch(fail)},
-  addClass(){const t=D.teachers.find(x=>x.id===val('c-t')),days=[...document.querySelectorAll('#c-d input:checked')].map(i=>+i.value),s=val('c-s'),c=val('c-c');
-    if(!s||!c||!t||!days.length)return toast('Fill subject, cohort, teacher and days',1);
-    F.addDoc(F.collection(db,'classes'),{subject:s,cohort:c,slot:val('c-sl'),days,teacherUid:t.id,teacherEmp:t.empId,teacherName:t.name,createdAt:F.serverTimestamp()}).then(()=>{toast('Class added');$('c-s').value=''}).catch(fail)},
-  addCohort(){const c=val('co-c').toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(!c)return toast('Enter a cohort code',1);
-    F.setDoc(F.doc(db,'cohorts',c),{name:val('co-n')||c,createdAt:F.serverTimestamp()}).then(()=>{toast('Cohort added');$('co-c').value='';$('co-n').value=''}).catch(fail)},
-  post(){const t=val('n-t'),m=val('n-m');if(!t||!m)return toast('Add a title and a message',1);
+  async addClass(){const t=D.teachers.find(x=>x.id===val('c-t')),days=[...document.querySelectorAll('#c-d input:checked')].map(i=>+i.value),s=val('c-s'),c=val('c-c');
+    if(!s||!c||!t||!days.length||!val('c-sl'))return toast('Fill subject, cohort, teacher, time and days',1);
+    if(!await ask({title:'Add class',warn:'This class becomes visible to students of the cohort and to the teacher. Check subject, cohort, teacher, time and days.',items:[s+' · '+cname(c),'Teacher: '+t.name,'Time: '+to12(val('c-sl'))+' · '+days.map(x=>DAYS[x]).join(', ')],ok:'Add class'}))return;
+    F.addDoc(F.collection(db,'classes'),{subject:s,cohort:c,slot:to12(val('c-sl')),days,teacherUid:t.id,teacherEmp:t.empId,teacherName:t.name,createdAt:F.serverTimestamp()}).then(()=>{toast('Class added');$('c-s').value=''}).catch(fail)},
+  async addCohort(){let k=val('co-k');if(k==='__new')k=val('co-n').toUpperCase().replace(/[^A-Z]/g,'');const n=val('co-s');if(!k||!n)return toast('Select course and semester',1);
+    const id=k+n;if(D.cohorts.some(c=>c.id===id))return toast(id+' already exists',1);
+    if(!await ask({title:'Add cohort',warn:'Students will see this cohort in the signup list. The code cannot be renamed later, so check it carefully.',items:['Code: '+id,'Name: '+k+' Semester '+n],ok:'Add cohort'}))return;
+    F.setDoc(F.doc(db,'cohorts',id),{name:k+' Semester '+n,createdAt:F.serverTimestamp()}).then(()=>{toast(id+' added');$('co-s').value=''}).catch(fail)},
+  async post(){const t=val('n-t'),m=val('n-m');if(!t||!m)return toast('Add a title and a message',1);
+    if(!await ask({title:'Post announcement',warn:'Everyone in the selected audience will see this message right away. It cannot be edited after posting; you can delete it later.',items:['Send to: '+(val('n-c')==='ALL'?'Everyone':cname(val('n-c'))),'Title: '+t],ok:'Post now'}))return;
     F.addDoc(F.collection(db,'announcements'),{cohort:val('n-c'),title:t,body:m,teacherUid:'admin',teacherName:'Admin',createdAt:F.serverTimestamp()}).then(()=>{toast('Announcement posted');$('n-t').value='';$('n-m').value=''}).catch(fail)},
   async promote(){const from=val('p-f'),to=val('p-t');if(!from||!to)return toast('Choose both cohorts',1);if(from===to)return toast('Pick two different cohorts',1);
     const list=D.students.filter(s=>s.cohort===from&&s.status==='active');if(!list.length)return toast('No active students in that cohort',1);
-    if(!confirm('Move '+list.length+' student'+(list.length===1?'':'s')+' from '+cname(from)+' to '+(to==='__out'?'Passed out (login disabled)':cname(to))+'?'))return;
+    if(!await ask({title:to==='__out'?'Mark cohort as passed out':'Semester-end promotion',danger:1,warn:to==='__out'?'Login of every active student in this cohort will be disabled.':'Every active student of this cohort moves to the next cohort and must request subjects again.',items:[list.length+' student'+(list.length===1?'':'s'),'From: '+cname(from),'To: '+(to==='__out'?'Passed out (login disabled)':cname(to)),'Old attendance records stay safe.'],ok:'Yes, promote '+list.length}))return;
     try{for(let i=0;i<list.length;i+=400){const b=F.writeBatch(db);list.slice(i,i+400).forEach(s=>b.update(F.doc(db,'students',s.id),to==='__out'?{status:'terminated'}:{cohort:to}));await b.commit()}toast(list.length+' students updated')}catch(e){fail(e)}}
 };
 document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t||t.closest('#login'))return;const d=t.dataset;
   if(d.tab){S.tab=d.tab;S.q='';S.f='all';render(true)}
   else if(d.f){S.f=d.f;render(true)}
-  else if(d.set)upd(d.set,d.id,{status:d.st});
-  else if(d.del){if(confirm('Delete permanently? This cannot be undone.'))F.deleteDoc(F.doc(db,d.del,d.id)).catch(fail)}
-  else if(d.do)DO[d.do]();
+  else if(d.set)gateSet(d.set,d.id,d.st);
+  else if(d.del)gateDel(d.del,d.id);
+  else if(d.do)gate(d.do);
 });
 document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;$('list').innerHTML=cur.list()}});
 document.addEventListener('change',e=>{
+  if(e.target.id==='co-k')$('co-nw').hidden=e.target.value!=='__new';
   if(e.target.id==='fs'){S.f=e.target.value;$('list').innerHTML=cur.list()}
   if(e.target.id==='p-f'){const n=nStu(e.target.value);$('p-info').textContent=e.target.value?n+' active student'+(n===1?'':'s')+' will move.':''}
 });

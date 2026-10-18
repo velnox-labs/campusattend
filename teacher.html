@@ -245,6 +245,7 @@ textarea.input{min-height:96px;padding:12px 14px;resize:vertical;line-height:1.4
 <script type="module" src="fb-manage.js"></script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
+<script src="fb-guard.js"></script>
 </head>
 <body>
 <div class="app" id="app">
@@ -742,7 +743,6 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     var dark=CA.theme()==='dark',cls=myClasses();
     var h='<div class="card" style="text-align:center;padding:22px 16px"><div class="avatar lg" style="margin:0 auto 12px">'+esc(CA.initials(T.name))+'</div><h2 style="font-size:20px">'+esc(T.name)+'</h2><p class="muted">'+esc(T.designation)+'</p><p class="small muted">'+esc(T.dept)+'</p><div class="summary-row" style="justify-content:center;margin:12px 0 0">'+CA.chip('neutral','ID '+T.id,'id')+CA.chip('neutral',cls.length+' classes','book')+'</div></div>';
     h+='<div class="section-title"><h2>Preferences</h2></div><div class="item"><span class="bubble">'+ic('moon')+'</span><span class="grow"><div class="t" id="dmlbl">Dark mode</div><div class="s">Easier on the eyes at night</div></span><button class="switch" role="switch" aria-checked="'+dark+'" aria-labelledby="dmlbl" data-act="theme"></button></div>';
-    h+='<div class="section-title"><h2>Data</h2></div><div class="item"><span class="bubble">'+ic('shield')+'</span><span class="grow"><div class="t">Demo data</div><div class="s">Stored on this device only</div></span><button class="btn sm danger" data-act="reset">Reset</button></div>';
     h+='<button class="btn ghost" data-act="logout" style="margin-top:22px;color:var(--bad)">'+ic('logout',18)+' Sign out</button>';
     h+='<p class="small muted" style="text-align:center;margin-top:20px;line-height:1.7">CampusAttend v1.0<br>Chhatrapati Shahu Ji Maharaj University, Kanpur</p>';
     return{html:h};
@@ -789,10 +789,6 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     ses:function(el){var s=CA.getSession(el.dataset.id),c=CA.getClass(s.classId);S.sheet={type:'ses',id:s.id};CA.page({title:c.subject,sub:CA.fmtDate(s.date)+' · '+CA.fmtTime(s.startedAt),body:''});CA.pageBody().dataset.kind='rec';renderSheet()},
     rec:function(el){CA.setRecord(el.dataset.sid,el.dataset.stu,el.dataset.v);renderSheet();render()},
     theme:function(){CA.setTheme(CA.theme()==='dark'?'light':'dark');render()},
-    reset:function(){
-      CA.dialog({title:'Reset demo data?',body:'<p class="muted">This restores the sample classes, students and attendance history. Any sessions you recorded will be removed.</p>',foot:'<button class="btn ghost" data-dclose>Cancel</button><button class="btn danger" data-act="reset-ok">Reset</button>'});
-    },
-    'reset-ok':function(){CA.closeDialog();CA.resetDemo();S.sid=null;S.classId=null;S.rep.classId=null;CA.toast('Demo data restored');render()},
     logout:function(){CA.logout();var go=function(){location.replace('index.html')};window.FBT?FBT.logout().then(go,go):go()}
   };
   document.addEventListener('click',function(e){var el=e.target.closest('[data-act]');if(!el)return;var f=A[el.dataset.act];if(f)f(el,e)});
@@ -821,6 +817,20 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
 
   render();
 })();
+</script>
+<script>
+GUARD.declare('teacher');GUARD.foot('teacher');
+GUARD.protect([
+ {sel:'[data-act="start"],[data-act="quick-live"],[data-act="quick-manual"]',cfg:{title:'Start attendance',warn:'You are starting attendance for a class. Students who do not mark will be recorded absent when you end the session.',ok:'Start now'}},
+ {sel:'[data-act="end-ok"]',cfg:{title:'End and save attendance',danger:1,warn:'Attendance will be saved for all students and synced online. Unmarked students are recorded absent.',ok:'End and save'}},
+ {sel:'[data-act="extend"]',cfg:{title:'Extend session',warn:'Students get 5 more minutes to mark attendance.',ok:'Extend 5 minutes'}},
+ {sel:'[data-act="msave"]',cfg:{title:'Save attendance',warn:'These records will be saved and become visible to the students and the admin.',ok:'Save attendance'}},
+ {sel:'[data-act="mall"]',cfg:{title:'Change everyone at once',warn:'This changes the attendance of all students in the list. Check the list before saving.',danger:1,ok:'Yes, change all'}},
+ {sel:'[data-act="rec"]',cfg:{title:'Change attendance record',warn:'You are editing a saved record. The student sees the change and it counts in reports.',danger:1,ok:'Yes, change it'}},
+ {sel:'[data-act="export"]',cfg:{title:'Download CSV report',warn:'This file contains student names, roll numbers and attendance. Keep it safe and do not share it outside the college.',disc:'Disclaimer: attendance data is confidential. Sharing it with unauthorised people may break college rules and privacy laws.',ok:'Download'}},
+ {sel:'[data-act="pdf"]',cfg:{title:'Download PDF report',warn:'This file contains student names, roll numbers and attendance. Keep it safe and do not share it outside the college.',disc:'Disclaimer: attendance data is confidential. Sharing it with unauthorised people may break college rules and privacy laws.',ok:'Download'}},
+ {sel:'[data-act="logout"]',cfg:{title:'Sign out',warn:'You will be signed out on this device.',disc:'Disclaimer: unsaved work on this screen may be lost.',ok:'Sign out'}}
+]);
 </script>
 </body>
 </html>

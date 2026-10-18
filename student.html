@@ -245,6 +245,7 @@ textarea.input{min-height:96px;padding:12px 14px;resize:vertical;line-height:1.4
 <script type="module" src="fb-manage.js"></script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
+<script src="fb-guard.js"></script>
 </head>
 <body>
 <div class="app" id="app">
@@ -723,6 +724,15 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
   addEventListener('fbann',function(){if(S.view==='home')render()});
   render();
 })();
+</script>
+<script>
+GUARD.declare('student');GUARD.foot('student');
+GUARD.protect([
+ {sel:'#mform',type:'submit',cfg:{title:'Mark my attendance',danger:1,warn:'Mark attendance only if you are in the class right now. Using someone else\u2019s code, or marking for a friend, is misconduct.',decl:'Declaration: I am personally present in this class and I am marking my own attendance.',ok:'Submit code'}},
+ {sel:'[data-act="scan"]',cfg:{title:'Scan attendance QR',danger:1,warn:'Scan only if you are in the class right now. Marking from outside the class is misconduct.',decl:'Declaration: I am personally present in this class and I am marking my own attendance.',ok:'Open camera'}},
+ {sel:'[data-act="pdf"]',cfg:{title:'Download attendance PDF',warn:'This file contains your attendance record. Keep it safe.',ok:'Download'}},
+ {sel:'[data-act="logout"]',cfg:{title:'Sign out',warn:'You will be signed out on this device.',disc:'Disclaimer: unsaved work on this screen may be lost.',ok:'Sign out'}}
+]);
 </script>
 </body>
 </html>
