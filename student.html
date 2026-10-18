@@ -183,15 +183,38 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .empty b{display:block;color:var(--ink);margin-bottom:2px}
 
 /* ---------- sheet + toast ---------- */
-.overlay{position:fixed;inset:0;background:rgba(15,5,4,.55);z-index:60;display:flex;align-items:flex-end;justify-content:center;animation:ofade .2s}
+/* ---------- full pages + dialogs (replace bottom sheets) ---------- */
 @keyframes ofade{from{opacity:0}}
-.sheet{width:100%;max-width:480px;max-height:88vh;max-height:88dvh;background:var(--surface);border-radius:26px 26px 0 0;display:flex;flex-direction:column;animation:up .26s cubic-bezier(.2,.9,.3,1);padding-bottom:env(safe-area-inset-bottom)}
-@keyframes up{from{transform:translateY(100%)}}
-.sheet .grab{width:42px;height:5px;border-radius:9px;background:var(--line);margin:10px auto 2px;flex:none}
-.sheet header{display:flex;align-items:center;gap:10px;padding:8px 16px 10px}
-.sheet header h3{flex:1;font-size:17px;font-weight:700}
-.sheet .body{overflow:auto;padding:4px 16px 16px;-webkit-overflow-scrolling:touch}
-.sheet .foot{padding:10px 16px 16px;border-top:1px solid var(--line);display:flex;gap:10px}
+@keyframes pin{from{transform:translateX(100%)}}
+.pagehost{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;overflow:hidden}
+.page{width:100%;max-width:480px;height:100%;background:var(--bg);display:flex;flex-direction:column;outline:0;animation:pin .28s cubic-bezier(.2,.85,.25,1)}
+@media(min-width:520px){.pagehost{background:linear-gradient(160deg,#3b0f0c,#150606)}.page{box-shadow:0 0 70px rgba(0,0,0,.5)}}
+.pagebar{flex:none;background:linear-gradient(135deg,#BC2018,#85120D);color:#fff;padding:calc(env(safe-area-inset-top) + 10px) 14px 12px;display:flex;align-items:center;gap:10px;min-height:64px}
+.pagebar .icon-btn{background:rgba(255,255,255,.15)}.pagebar .icon-btn:active{background:rgba(255,255,255,.28)}
+.pagebar .tb-text{flex:1;min-width:0}.pagebar h1{font-size:17px;font-weight:700}.pagebar p{font-size:12px;opacity:.88}
+.pagebody{flex:1;overflow:auto;padding:16px 16px 28px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.pagefoot{flex:none;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line);display:flex;gap:10px}
+html.nopage,html.nopage body{overflow:hidden}
+.dlg-host{position:fixed;inset:0;z-index:70;background:rgba(15,5,4,.55);display:grid;place-items:center;padding:20px;animation:ofade .2s}
+.dlg{width:100%;max-width:360px;background:var(--surface);border-radius:22px;padding:22px 20px 18px;box-shadow:var(--shadow);outline:0;animation:pop .25s cubic-bezier(.2,1.2,.4,1)}
+.dlg h3{font-size:17px;margin-bottom:6px}.dlg .foot{display:flex;gap:10px;margin-top:18px}
+.hero{background:linear-gradient(145deg,#BC2018,#7C0F0A);color:#fff;border-radius:22px;padding:18px;box-shadow:0 14px 34px rgba(150,20,14,.28)}
+.hero .big{font-size:36px;font-weight:800;letter-spacing:-.02em;line-height:1.1}.hero .small{opacity:.88}
+.hero .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.hero .kv div{background:rgba(255,255,255,.14);border-radius:14px;padding:10px}.hero .kv b{display:block;font-size:18px}.hero .kv span{font-size:11.5px;opacity:.9;line-height:1.2;display:block}
+.hero .hbar{height:8px;border-radius:99px;background:rgba(255,255,255,.25);margin-top:12px;overflow:hidden}.hero .hbar i{display:block;height:100%;background:#fff;border-radius:99px}
+.qa{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px;margin-top:12px}
+.qa button{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:13px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--ink);box-shadow:var(--shadow)}
+.qa button svg{color:var(--brand)}.qa button:active{background:var(--surface-2)}
+.badge{position:absolute;top:6px;right:8px;min-width:18px;height:18px;border-radius:9px;background:var(--brand);color:#fff;font:700 11px/18px Inter,sans-serif;text-align:center;padding:0 5px;font-style:normal}
+.sect{margin:18px 2px 8px;font-size:13px;font-weight:700;color:var(--ink-2)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center;margin-top:12px}.cal small{color:var(--ink-3);font-weight:600;padding-bottom:2px}
+.cal button{aspect-ratio:1;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font-weight:600}
+.cal button.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}.cal button.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}.cal button.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.cal button.sel{border:2px solid var(--brand)}
+.daychip{position:relative}.daychip input{position:absolute;opacity:0;inset:0}.daychip span{display:block;padding:9px 13px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:13px;color:var(--ink-2)}
+.daychip input:checked+span{background:var(--brand);border-color:var(--brand);color:#fff}.daychip input:focus-visible+span{outline:3px solid color-mix(in srgb,var(--brand) 60%,transparent)}
+.mbar{display:flex;justify-content:space-between;align-items:center;gap:8px}.mbar b{font-size:16px}
 .toasts{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 76px);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:80;pointer-events:none;padding:0 16px}
 .toast{background:#241816;color:#fff;border-radius:14px;padding:11px 16px;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;align-items:center;gap:8px;max-width:420px;animation:tin .25s ease}
 .toast.ok svg{color:#5BE3A0}.toast.bad svg{color:#FF8E85}
@@ -435,17 +458,35 @@ function toast(msg,type){
   t.innerHTML=icon(type==='bad'?'xc':'checkc',18)+'<span>'+esc(msg)+'</span>';
   w.appendChild(t);setTimeout(()=>t.remove(),2800);
 }
-let sheetEl=null,lastFocus=null;
-function sheet(opt){
-  closeSheet();lastFocus=document.activeElement;
-  const o=document.createElement('div');o.className='overlay';
-  o.innerHTML='<div class="sheet" role="dialog" aria-modal="true" aria-label="'+esc(opt.title)+'" tabindex="-1"><div class="grab"></div><header><h3>'+esc(opt.title)+'</h3><button class="icon-btn" data-close aria-label="Close">'+icon('x')+'</button></header><div class="body">'+opt.body+'</div>'+(opt.foot?'<div class="foot">'+opt.foot+'</div>':'')+'</div>';
-  o.addEventListener('click',e=>{if(e.target===o||e.target.closest('[data-close]'))closeSheet()});
-  document.body.appendChild(o);sheetEl=o;o.querySelector('.sheet').focus();return o;
+let pageEl=null,pageCb=null,lastFocus=null,pushed=false,backing=false,dlgEl=null;
+function page(o){
+  if(!pageEl){lastFocus=document.activeElement;pageEl=document.createElement('div');pageEl.className='pagehost';document.body.appendChild(pageEl);document.documentElement.classList.add('nopage');
+    pageEl.onclick=e=>{if(e.target.closest('[data-close]'))closePage()};
+    if(!pushed&&!backing){history.pushState({ca:1},'');pushed=true}}
+  pageCb=null;
+  pageEl.innerHTML='<section class="page" role="dialog" aria-modal="true" aria-label="'+esc(o.title)+'" tabindex="-1"><header class="pagebar"><button class="icon-btn" data-close aria-label="Back">'+icon('back')+'</button><div class="tb-text"><h1 class="ellipsis">'+esc(o.title)+'</h1>'+(o.sub?'<p class="ellipsis">'+esc(o.sub)+'</p>':'')+'</div></header><div class="pagebody">'+(o.body||'')+'</div><div class="pagefoot"'+(o.foot?'':' hidden')+'>'+(o.foot||'')+'</div></section>';
+  pageEl.querySelector('.page').focus();return pageEl;
 }
-function closeSheet(){if(sheetEl){sheetEl.remove();sheetEl=null;try{lastFocus&&lastFocus.focus&&lastFocus.focus()}catch(e){}}}
-const sheetBody=()=>sheetEl&&sheetEl.querySelector('.body');
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+function closePage(fromPop){
+  if(!pageEl)return;
+  pageEl.remove();pageEl=null;document.documentElement.classList.remove('nopage');
+  const cb=pageCb;pageCb=null;
+  if(pushed&&fromPop!==true){pushed=false;backing=true;history.back()}else pushed=false;
+  try{lastFocus&&lastFocus.focus&&lastFocus.focus()}catch(e){}
+  cb&&cb();
+}
+addEventListener('popstate',()=>{if(backing){backing=false;return}if(pageEl){pushed=false;closePage(true)}});
+const pageBody=()=>pageEl&&pageEl.querySelector('.pagebody');
+const pageFoot=h=>{const f=pageEl&&pageEl.querySelector('.pagefoot');if(f){f.innerHTML=h||'';f.hidden=!h}};
+const pageClose=fn=>{pageCb=fn};
+function dialog(o){
+  closeDialog();dlgEl=document.createElement('div');dlgEl.className='dlg-host';
+  dlgEl.innerHTML='<div class="dlg" role="alertdialog" aria-modal="true" aria-label="'+esc(o.title)+'" tabindex="-1"><h3>'+esc(o.title)+'</h3>'+o.body+'<div class="foot">'+o.foot+'</div></div>';
+  dlgEl.onclick=e=>{if(e.target===dlgEl||e.target.closest('[data-dclose]'))closeDialog()};
+  document.body.appendChild(dlgEl);dlgEl.querySelector('.dlg').focus();
+}
+function closeDialog(){if(dlgEl){dlgEl.remove();dlgEl=null}}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')dlgEl?closeDialog():closePage()});
 
 function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem(THEME,t)}catch(e){}const m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dark'?'#6A0F0A':'#A81D16'}
 const theme=()=>document.documentElement.dataset.theme==='dark'?'dark':'light';
@@ -459,7 +500,7 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
   getClass,cohortName,teacherOf,roster,classesOfTeacher,classesOfStudent,getSession,openSessionFor,sessionsOf,
   tally,overall,classStats,level,levelLabel,advice,liveCode,codeAt,sweep,startLive,extend,closeSession,setRecord,saveManual,
   submitCode,openForStudent,csv,download,
-  icon,ring,chip,pctText,toast,sheet,closeSheet,sheetBody,setTheme,theme,brand};
+  icon,ring,chip,pctText,toast,page,closePage,pageBody,pageFoot,pageClose,dialog,closeDialog,sheet:page,closeSheet:closePage,sheetBody:pageBody,setTheme,theme,brand};
 })();
 
 </script>
@@ -504,7 +545,8 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
         ?'<div class="item" style="margin-top:14px;border-color:var(--ok)"><span class="avatar" style="background:var(--ok-soft);color:var(--ok)">'+ic('check',20)+'</span><span class="grow"><div class="t">Marked present · '+esc(x.cls.subject)+'</div><div class="s">Your attendance is recorded</div></span></div>'
         :'<button class="item" data-act="nav" data-v="mark" style="margin-top:14px;border-color:var(--brand)"><span class="bubble">'+ic('radio')+'</span><span class="grow"><div class="t">Attendance open · '+esc(x.cls.subject)+'</div><div class="s">Tap to enter the code from your teacher</div></span>'+ic('chev',18)+'</button>';
     }).join('');
-    h+='<div class="card" style="margin-top:14px"><div class="row" style="gap:16px"><div class="ring-wrap">'+CA.ring(o.pct,116,11,o.t?lv:'brand',o.t?Math.round(o.pct)+' percent overall attendance':'No attendance yet')+'<div class="lbl" style="font-size:28px">'+(o.t?Math.round(o.pct)+'%':'—')+'<small>overall</small></div></div><div class="grow"><div class="small muted">Overall attendance</div><div class="num" style="font-size:18px;font-weight:700">'+o.p+' of '+o.t+' classes</div><div style="margin-top:8px">'+(o.t?CA.chip(lv,CA.levelLabel[lv],lv==='ok'?'checkc':'alert'):'')+'</div></div></div><p class="small muted" style="margin-top:12px">'+esc(CA.advice(o.p,o.t))+'. Minimum required: '+CA.MIN_PCT+'%.</p></div>';
+    h+='<div class="hero" style="margin-top:14px"><div class="row"><div class="grow"><div class="small">Overall attendance</div><div class="big num">'+(o.t?Math.round(o.pct)+'%':'—')+'</div></div>'+(o.t?'<span class="chip '+lv+'" style="background:var(--surface)">'+CA.levelLabel[lv]+'</span>':'')+'</div><div class="hbar"><i style="width:'+Math.round(o.pct)+'%"></i></div><p class="small" style="margin-top:10px">'+esc(CA.advice(o.p,o.t))+'. Minimum required: '+CA.MIN_PCT+'%.</p><div class="kv"><div><b>'+o.p+'</b><span>Present</span></div><div><b>'+(o.t-o.p)+'</b><span>Absent</span></div><div><b>'+cls.length+'</b><span>Subjects</span></div></div></div>';
+    h+='<div class="qa"><button data-act="nav" data-v="mark">'+ic('clip',22)+'Mark</button>'+(U.fb&&window.FBM?'<button data-act="fbcal">'+ic('cal',22)+'Calendar</button><button data-act="fbenroll">'+ic('book',22)+'Enroll</button>':'<button data-act="nav" data-v="subjects">'+ic('book',22)+'Subjects</button>')+'</div>';
     h+='<div class="section-title"><h2>Subjects</h2><button class="link" data-act="nav" data-v="subjects">View all</button></div><div class="stack">';
     h+=cls.map(function(c){
       var x=CA.tally(U.id,c.id),l=CA.level(x.pct);
@@ -558,14 +600,16 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     return{html:h};
   }
   function openSubject(id){
-    var c=CA.getClass(id),x=CA.tally(U.id,id),l=CA.level(x.pct);
-    var recs=CA.sessionsOf(id).filter(function(s){return s.records[U.id]});
-    var b='<div class="card flat"><div class="row"><div class="grow"><div class="t" style="font-weight:700">'+x.p+' of '+x.t+' classes attended</div><div class="small muted">'+esc(CA.advice(x.p,x.t))+'</div></div>'+(x.t?CA.chip(l,Math.round(x.pct)+'%'):'')+'</div></div><div class="small muted" style="margin:14px 2px 2px">History</div>';
+    var c=CA.getClass(id),x=CA.tally(U.id,id),l=CA.level(x.pct),t=CA.teacherOf(c.teacherId);
+    var recs=CA.sessionsOf(id).filter(function(s){return s.records[U.id]}),need=x.t&&x.pct<CA.MIN_PCT?Math.ceil((CA.MIN_PCT/100*x.t-x.p)/(1-CA.MIN_PCT/100)):0,can=Math.floor(x.p/(CA.MIN_PCT/100)-x.t);
+    var tip=!x.t?'Attendance will appear after the first class.':need?'Attend the next '+need+' class'+(need===1?'':'es')+' in a row to reach '+CA.MIN_PCT+'%.':can>0?'You can miss '+can+' more class'+(can===1?'':'es')+' and stay above '+CA.MIN_PCT+'%.':'Attend every class to stay above '+CA.MIN_PCT+'%.';
+    var b='<div class="card"><div class="row" style="gap:16px"><div class="ring-wrap">'+CA.ring(x.pct,92,9,x.t?l:'brand',x.t?Math.round(x.pct)+' percent':'No data')+'<div class="lbl" style="font-size:22px">'+(x.t?Math.round(x.pct)+'%':'—')+'</div></div><div class="grow"><div class="num" style="font-size:18px;font-weight:700">'+x.p+' of '+x.t+' classes</div><div style="margin-top:8px">'+(x.t?CA.chip(l,CA.levelLabel[l]):CA.chip('neutral','No classes yet'))+'</div></div></div></div>';
+    b+='<div class="item" style="margin-top:10px"><span class="bubble">'+ic(need?'alert':'shield')+'</span><span class="grow"><div class="s" style="color:var(--ink)">'+esc(tip)+'</div></span></div><div class="sect">History</div>';
     b+=recs.map(function(s){
       var p=s.records[U.id]==='P';
       return '<div class="hist"><div><div class="t" style="font-weight:600">'+CA.fmtDate(s.date)+'</div><div class="small muted">'+CA.fmtTime(s.startedAt)+' · '+(s.method==='live'?'Live code':'Marked by teacher')+'</div></div>'+CA.chip(p?'ok':'bad',p?'Present':'Absent',p?'check':'x')+'</div>';
     }).join('')||'<p class="muted" style="padding:14px 2px">No classes recorded yet.</p>';
-    CA.sheet({title:c.subject,body:b});
+    CA.page({title:c.subject,sub:(t?t.name+' · ':'')+c.slot,body:b});
   }
 
   /* ---------------- profile ---------------- */
@@ -583,6 +627,7 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
   var A={
     nav:function(el){go(el.dataset.v)},
     sub:function(el){openSubject(el.dataset.id)},
+    fbcal:function(){FBM.openCalendar()},fbenroll:function(){FBM.openEnroll()},
     done:function(){S.done=null;go('home')},
     theme:function(){CA.setTheme(CA.theme()==='dark'?'light':'dark');render()},
     logout:function(){CA.logout();var go=function(){location.replace('index.html')};window.FBT?FBT.logout().then(go,go):go()}

@@ -183,15 +183,38 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .empty b{display:block;color:var(--ink);margin-bottom:2px}
 
 /* ---------- sheet + toast ---------- */
-.overlay{position:fixed;inset:0;background:rgba(15,5,4,.55);z-index:60;display:flex;align-items:flex-end;justify-content:center;animation:ofade .2s}
+/* ---------- full pages + dialogs (replace bottom sheets) ---------- */
 @keyframes ofade{from{opacity:0}}
-.sheet{width:100%;max-width:480px;max-height:88vh;max-height:88dvh;background:var(--surface);border-radius:26px 26px 0 0;display:flex;flex-direction:column;animation:up .26s cubic-bezier(.2,.9,.3,1);padding-bottom:env(safe-area-inset-bottom)}
-@keyframes up{from{transform:translateY(100%)}}
-.sheet .grab{width:42px;height:5px;border-radius:9px;background:var(--line);margin:10px auto 2px;flex:none}
-.sheet header{display:flex;align-items:center;gap:10px;padding:8px 16px 10px}
-.sheet header h3{flex:1;font-size:17px;font-weight:700}
-.sheet .body{overflow:auto;padding:4px 16px 16px;-webkit-overflow-scrolling:touch}
-.sheet .foot{padding:10px 16px 16px;border-top:1px solid var(--line);display:flex;gap:10px}
+@keyframes pin{from{transform:translateX(100%)}}
+.pagehost{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;overflow:hidden}
+.page{width:100%;max-width:480px;height:100%;background:var(--bg);display:flex;flex-direction:column;outline:0;animation:pin .28s cubic-bezier(.2,.85,.25,1)}
+@media(min-width:520px){.pagehost{background:linear-gradient(160deg,#3b0f0c,#150606)}.page{box-shadow:0 0 70px rgba(0,0,0,.5)}}
+.pagebar{flex:none;background:linear-gradient(135deg,#BC2018,#85120D);color:#fff;padding:calc(env(safe-area-inset-top) + 10px) 14px 12px;display:flex;align-items:center;gap:10px;min-height:64px}
+.pagebar .icon-btn{background:rgba(255,255,255,.15)}.pagebar .icon-btn:active{background:rgba(255,255,255,.28)}
+.pagebar .tb-text{flex:1;min-width:0}.pagebar h1{font-size:17px;font-weight:700}.pagebar p{font-size:12px;opacity:.88}
+.pagebody{flex:1;overflow:auto;padding:16px 16px 28px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.pagefoot{flex:none;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line);display:flex;gap:10px}
+html.nopage,html.nopage body{overflow:hidden}
+.dlg-host{position:fixed;inset:0;z-index:70;background:rgba(15,5,4,.55);display:grid;place-items:center;padding:20px;animation:ofade .2s}
+.dlg{width:100%;max-width:360px;background:var(--surface);border-radius:22px;padding:22px 20px 18px;box-shadow:var(--shadow);outline:0;animation:pop .25s cubic-bezier(.2,1.2,.4,1)}
+.dlg h3{font-size:17px;margin-bottom:6px}.dlg .foot{display:flex;gap:10px;margin-top:18px}
+.hero{background:linear-gradient(145deg,#BC2018,#7C0F0A);color:#fff;border-radius:22px;padding:18px;box-shadow:0 14px 34px rgba(150,20,14,.28)}
+.hero .big{font-size:36px;font-weight:800;letter-spacing:-.02em;line-height:1.1}.hero .small{opacity:.88}
+.hero .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.hero .kv div{background:rgba(255,255,255,.14);border-radius:14px;padding:10px}.hero .kv b{display:block;font-size:18px}.hero .kv span{font-size:11.5px;opacity:.9;line-height:1.2;display:block}
+.hero .hbar{height:8px;border-radius:99px;background:rgba(255,255,255,.25);margin-top:12px;overflow:hidden}.hero .hbar i{display:block;height:100%;background:#fff;border-radius:99px}
+.qa{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px;margin-top:12px}
+.qa button{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:13px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--ink);box-shadow:var(--shadow)}
+.qa button svg{color:var(--brand)}.qa button:active{background:var(--surface-2)}
+.badge{position:absolute;top:6px;right:8px;min-width:18px;height:18px;border-radius:9px;background:var(--brand);color:#fff;font:700 11px/18px Inter,sans-serif;text-align:center;padding:0 5px;font-style:normal}
+.sect{margin:18px 2px 8px;font-size:13px;font-weight:700;color:var(--ink-2)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center;margin-top:12px}.cal small{color:var(--ink-3);font-weight:600;padding-bottom:2px}
+.cal button{aspect-ratio:1;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font-weight:600}
+.cal button.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}.cal button.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}.cal button.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.cal button.sel{border:2px solid var(--brand)}
+.daychip{position:relative}.daychip input{position:absolute;opacity:0;inset:0}.daychip span{display:block;padding:9px 13px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:13px;color:var(--ink-2)}
+.daychip input:checked+span{background:var(--brand);border-color:var(--brand);color:#fff}.daychip input:focus-visible+span{outline:3px solid color-mix(in srgb,var(--brand) 60%,transparent)}
+.mbar{display:flex;justify-content:space-between;align-items:center;gap:8px}.mbar b{font-size:16px}
 .toasts{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 76px);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:80;pointer-events:none;padding:0 16px}
 .toast{background:#241816;color:#fff;border-radius:14px;padding:11px 16px;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;align-items:center;gap:8px;max-width:420px;animation:tin .25s ease}
 .toast.ok svg{color:#5BE3A0}.toast.bad svg{color:#FF8E85}
@@ -436,17 +459,35 @@ function toast(msg,type){
   t.innerHTML=icon(type==='bad'?'xc':'checkc',18)+'<span>'+esc(msg)+'</span>';
   w.appendChild(t);setTimeout(()=>t.remove(),2800);
 }
-let sheetEl=null,lastFocus=null;
-function sheet(opt){
-  closeSheet();lastFocus=document.activeElement;
-  const o=document.createElement('div');o.className='overlay';
-  o.innerHTML='<div class="sheet" role="dialog" aria-modal="true" aria-label="'+esc(opt.title)+'" tabindex="-1"><div class="grab"></div><header><h3>'+esc(opt.title)+'</h3><button class="icon-btn" data-close aria-label="Close">'+icon('x')+'</button></header><div class="body">'+opt.body+'</div>'+(opt.foot?'<div class="foot">'+opt.foot+'</div>':'')+'</div>';
-  o.addEventListener('click',e=>{if(e.target===o||e.target.closest('[data-close]'))closeSheet()});
-  document.body.appendChild(o);sheetEl=o;o.querySelector('.sheet').focus();return o;
+let pageEl=null,pageCb=null,lastFocus=null,pushed=false,backing=false,dlgEl=null;
+function page(o){
+  if(!pageEl){lastFocus=document.activeElement;pageEl=document.createElement('div');pageEl.className='pagehost';document.body.appendChild(pageEl);document.documentElement.classList.add('nopage');
+    pageEl.onclick=e=>{if(e.target.closest('[data-close]'))closePage()};
+    if(!pushed&&!backing){history.pushState({ca:1},'');pushed=true}}
+  pageCb=null;
+  pageEl.innerHTML='<section class="page" role="dialog" aria-modal="true" aria-label="'+esc(o.title)+'" tabindex="-1"><header class="pagebar"><button class="icon-btn" data-close aria-label="Back">'+icon('back')+'</button><div class="tb-text"><h1 class="ellipsis">'+esc(o.title)+'</h1>'+(o.sub?'<p class="ellipsis">'+esc(o.sub)+'</p>':'')+'</div></header><div class="pagebody">'+(o.body||'')+'</div><div class="pagefoot"'+(o.foot?'':' hidden')+'>'+(o.foot||'')+'</div></section>';
+  pageEl.querySelector('.page').focus();return pageEl;
 }
-function closeSheet(){if(sheetEl){sheetEl.remove();sheetEl=null;try{lastFocus&&lastFocus.focus&&lastFocus.focus()}catch(e){}}}
-const sheetBody=()=>sheetEl&&sheetEl.querySelector('.body');
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+function closePage(fromPop){
+  if(!pageEl)return;
+  pageEl.remove();pageEl=null;document.documentElement.classList.remove('nopage');
+  const cb=pageCb;pageCb=null;
+  if(pushed&&fromPop!==true){pushed=false;backing=true;history.back()}else pushed=false;
+  try{lastFocus&&lastFocus.focus&&lastFocus.focus()}catch(e){}
+  cb&&cb();
+}
+addEventListener('popstate',()=>{if(backing){backing=false;return}if(pageEl){pushed=false;closePage(true)}});
+const pageBody=()=>pageEl&&pageEl.querySelector('.pagebody');
+const pageFoot=h=>{const f=pageEl&&pageEl.querySelector('.pagefoot');if(f){f.innerHTML=h||'';f.hidden=!h}};
+const pageClose=fn=>{pageCb=fn};
+function dialog(o){
+  closeDialog();dlgEl=document.createElement('div');dlgEl.className='dlg-host';
+  dlgEl.innerHTML='<div class="dlg" role="alertdialog" aria-modal="true" aria-label="'+esc(o.title)+'" tabindex="-1"><h3>'+esc(o.title)+'</h3>'+o.body+'<div class="foot">'+o.foot+'</div></div>';
+  dlgEl.onclick=e=>{if(e.target===dlgEl||e.target.closest('[data-dclose]'))closeDialog()};
+  document.body.appendChild(dlgEl);dlgEl.querySelector('.dlg').focus();
+}
+function closeDialog(){if(dlgEl){dlgEl.remove();dlgEl=null}}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')dlgEl?closeDialog():closePage()});
 
 function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem(THEME,t)}catch(e){}const m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dark'?'#6A0F0A':'#A81D16'}
 const theme=()=>document.documentElement.dataset.theme==='dark'?'dark':'light';
@@ -460,7 +501,7 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
   getClass,cohortName,teacherOf,roster,classesOfTeacher,classesOfStudent,getSession,openSessionFor,sessionsOf,
   tally,overall,classStats,level,levelLabel,advice,liveCode,codeAt,sweep,startLive,extend,closeSession,setRecord,saveManual,
   submitCode,openForStudent,csv,download,
-  icon,ring,chip,pctText,toast,sheet,closeSheet,sheetBody,setTheme,theme,brand};
+  icon,ring,chip,pctText,toast,page,closePage,pageBody,pageFoot,pageClose,dialog,closeDialog,sheet:page,closeSheet:closePage,sheetBody:pageBody,setTheme,theme,brand};
 })();
 
 </script>
@@ -519,7 +560,8 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
       var c=CA.getClass(s.classId),tot=CA.roster(s.classId).length,m=Object.keys(s.records).length;
       return '<button class="item" data-act="resume" data-id="'+s.id+'" style="margin-top:14px;border-color:var(--brand)"><span class="bubble">'+ic('radio')+'</span><span class="grow"><div class="t">Live now · '+esc(c.subject)+'</div><div class="s">'+m+' of '+tot+' marked · closes in <span class="num" data-left="'+s.id+'">'+CA.mmss(s.expiresAt-now)+'</span></div></span>'+ic('chev',18)+'</button>';
     }).join('');
-    h+='<div class="stats"><div class="stat"><b>'+n30+'</b><span>Sessions in last 30 days</span></div><div class="stat"><b>'+avg+'%</b><span>Average attendance</span></div><div class="stat"><b>'+Object.keys(low).length+'</b><span>Students below '+CA.MIN_PCT+'%</span></div></div>';
+    h+='<div class="hero" style="margin-top:14px"><div class="small">Average attendance</div><div class="big num">'+avg+'%</div><div class="hbar"><i style="width:'+avg+'%"></i></div><div class="kv"><div><b>'+n30+'</b><span>Sessions in 30 days</span></div><div><b>'+cls.length+'</b><span>Classes</span></div><div><b>'+Object.keys(low).length+'</b><span>Below '+CA.MIN_PCT+'%</span></div></div></div>';
+    if(T.fb&&window.FBM)h+='<div class="qa"><button data-act="fbclasses">'+ic('book',22)+'Classes</button><button data-act="fbreq">'+ic('users',22)+'Requests'+(window.FBM&&FBM.n?'<i class="badge" data-badge>'+FBM.n+'</i>':'<i class="badge" data-badge hidden></i>')+'</button><button data-act="nav" data-v="reports">'+ic('chart',22)+'Reports</button></div>';
     h+='<div class="section-title"><h2>My classes</h2></div><div class="stack">';
     h+=cls.map(function(c){
       var st=CA.classStats(c.id),lv=CA.level(st.pct);
@@ -584,7 +626,7 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     var c=CA.getClass(s.classId),ros=CA.roster(s.classId);
     var pres=ros.filter(function(x){return s.records[x.id]==='P'}),abs=ros.filter(function(x){return s.records[x.id]!=='P'});
     var pct=ros.length?Math.round(pres.length/ros.length*100):0;
-    CA.sheet({title:title||'Session saved',body:'<div class="result"><div class="big ok">'+ic('check',44)+'</div><h3>'+esc(c.subject)+'</h3><p class="muted" style="margin-top:4px"><b>'+pres.length+'</b> present · <b>'+abs.length+'</b> absent · '+pct+'%</p></div>'+(abs.length?'<div class="small muted" style="margin:0 2px 8px">Absent</div><div class="flexwrap">'+abs.map(function(a){return CA.chip('bad',a.name)}).join('')+'</div>':''),foot:'<button class="btn" data-close>Done</button>'});
+    CA.page({title:title||'Session saved',sub:c.subject,body:'<div class="result"><div class="big ok">'+ic('check',44)+'</div><h3>'+esc(c.subject)+'</h3><p class="muted" style="margin-top:4px"><b>'+pres.length+'</b> present · <b>'+abs.length+'</b> absent · '+pct+'%</p></div>'+(abs.length?'<div class="small muted" style="margin:0 2px 8px">Absent</div><div class="flexwrap">'+abs.map(function(a){return CA.chip('bad',a.name)}).join('')+'</div>':''),foot:'<button class="btn" data-close>Done</button>'});
   }
 
   /* ---------------- manual attendance ---------------- */
@@ -637,7 +679,7 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     return{html:h};
   }
   function renderSheet(){
-    var b=CA.sheetBody();if(!b||!S.sheet||b.dataset.kind!=='rec')return;
+    var b=CA.pageBody();if(!b||!S.sheet||b.dataset.kind!=='rec')return;
     var top=b.scrollTop,h='';
     if(S.sheet.type==='stu'){
       var c=CA.getClass(S.rep.classId),st=CA.db().students.find(function(x){return x.id===S.sheet.id}),x=CA.tally(st.id,c.id),lv=CA.level(x.pct);
@@ -669,6 +711,7 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
   /* ---------------- actions ---------------- */
   var A={
     nav:function(el){go(el.dataset.v)},
+    fbclasses:function(){FBM.openClasses('classes')},fbreq:function(){FBM.openClasses('requests')},
     back:function(){go('attend')},
     pick:function(el){S.classId=el.dataset.id;render()},
     method:function(el){S.method=el.dataset.v;render()},
@@ -680,9 +723,9 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     extend:function(){CA.extend(S.sid,5*60000);fillLive();CA.toast('Session extended by 5 minutes')},
     end:function(){
       var s=CA.getSession(S.sid),ros=CA.roster(s.classId),un=ros.filter(function(x){return s.records[x.id]!=='P'}).length;
-      CA.sheet({title:'End this session?',body:'<p class="muted">'+(un?un+' student'+(un===1?'':'s')+' who haven’t marked will be recorded as absent.':'Everyone has marked attendance.')+' You can still correct records later from Reports.</p>',foot:'<button class="btn ghost" data-close>Keep open</button><button class="btn" data-act="end-ok">End and save</button>'});
+      CA.dialog({title:'End this session?',body:'<p class="muted">'+(un?un+' student'+(un===1?'':'s')+' who haven’t marked will be recorded as absent.':'Everyone has marked attendance.')+' You can still correct records later from Reports.</p>',foot:'<button class="btn ghost" data-dclose>Keep open</button><button class="btn" data-act="end-ok">End and save</button>'});
     },
-    'end-ok':function(){var s=CA.closeSession(S.sid);CA.closeSheet();S.rep.classId=s.classId;S.classId=s.classId;go('attend');summary(s)},
+    'end-ok':function(){var s=CA.closeSession(S.sid);CA.closeDialog();S.rep.classId=s.classId;S.classId=s.classId;go('attend');summary(s)},
     mpa:function(el){S.m.rec[el.dataset.id]=el.dataset.v;fillManual()},
     mall:function(el){CA.roster(S.m.classId).forEach(function(s){S.m.rec[s.id]=el.dataset.v});fillManual()},
     msave:function(){
@@ -692,14 +735,14 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     rtab:function(el){S.rep.tab=el.dataset.v;render()},
     rlow:function(){S.rep.low=!S.rep.low;render()},
     export:function(){var c=CA.getClass(S.rep.classId);CA.download('CampusAttend_'+c.subject.replace(/\W+/g,'_')+'_'+today()+'.csv',CA.csv(c.id));CA.toast('CSV downloaded')},
-    stu:function(el){S.sheet={type:'stu',id:el.dataset.id};var st=CA.db().students.find(function(x){return x.id===el.dataset.id});CA.sheet({title:st.name+' · '+st.id,body:''});CA.sheetBody().dataset.kind='rec';renderSheet()},
-    ses:function(el){var s=CA.getSession(el.dataset.id),c=CA.getClass(s.classId);S.sheet={type:'ses',id:s.id};CA.sheet({title:c.subject+' · '+CA.fmtDate(s.date),body:''});CA.sheetBody().dataset.kind='rec';renderSheet()},
+    stu:function(el){S.sheet={type:'stu',id:el.dataset.id};var st=CA.db().students.find(function(x){return x.id===el.dataset.id});CA.page({title:st.name,sub:st.id+' · '+CA.cohortName(st.cohort),body:''});CA.pageBody().dataset.kind='rec';renderSheet()},
+    ses:function(el){var s=CA.getSession(el.dataset.id),c=CA.getClass(s.classId);S.sheet={type:'ses',id:s.id};CA.page({title:c.subject,sub:CA.fmtDate(s.date)+' · '+CA.fmtTime(s.startedAt),body:''});CA.pageBody().dataset.kind='rec';renderSheet()},
     rec:function(el){CA.setRecord(el.dataset.sid,el.dataset.stu,el.dataset.v);renderSheet();render()},
     theme:function(){CA.setTheme(CA.theme()==='dark'?'light':'dark');render()},
     reset:function(){
-      CA.sheet({title:'Reset demo data?',body:'<p class="muted">This restores the sample classes, students and attendance history. Any sessions you recorded will be removed.</p>',foot:'<button class="btn ghost" data-close>Cancel</button><button class="btn danger" data-act="reset-ok">Reset</button>'});
+      CA.dialog({title:'Reset demo data?',body:'<p class="muted">This restores the sample classes, students and attendance history. Any sessions you recorded will be removed.</p>',foot:'<button class="btn ghost" data-dclose>Cancel</button><button class="btn danger" data-act="reset-ok">Reset</button>'});
     },
-    'reset-ok':function(){CA.closeSheet();CA.resetDemo();S.sid=null;S.classId=null;S.rep.classId=null;CA.toast('Demo data restored');render()},
+    'reset-ok':function(){CA.closeDialog();CA.resetDemo();S.sid=null;S.classId=null;S.rep.classId=null;CA.toast('Demo data restored');render()},
     logout:function(){CA.logout();var go=function(){location.replace('index.html')};window.FBT?FBT.logout().then(go,go):go()}
   };
   document.addEventListener('click',function(e){var el=e.target.closest('[data-act]');if(!el)return;var f=A[el.dataset.act];if(f)f(el,e)});

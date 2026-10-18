@@ -3,13 +3,8 @@
 const esc=s=>CA.esc(s);
 const ST={pending:'warn',approved:'ok',rejected:'bad'};
 const chip=s=>CA.chip(ST[s]||'neutral',s);
-const btn='style="padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-weight:600"';
+const B='btn sm ghost',empty=(i,t,s)=>'<div class="empty card flat"><div class="bubble">'+CA.icon(i)+'</div><b>'+esc(t)+'</b><span>'+esc(s)+'</span></div>';
 
-function fab(label,fn,bot){
-  const b=document.createElement('button');b.textContent=label;b.onclick=fn;
-  b.style.cssText='position:fixed;right:14px;bottom:'+(bot||88)+'px;z-index:30;padding:12px 18px;border-radius:99px;background:var(--btn);color:var(--btn-ink);font-weight:700;border:0;box-shadow:0 4px 14px rgba(0,0,0,.28)';
-  document.body.appendChild(b);
-}
 async function sync(role){
   const F=FBT.f,db=FBT.db,uid=FBT.uid(),me=CA.current(role).user,d=CA.db();
   const before=JSON.stringify([d.classes,d.students,d.teachers,d.cohorts]);
@@ -34,63 +29,68 @@ async function sync(role){
   if(JSON.stringify([d.classes,d.students,d.teachers,d.cohorts])!==before){CA.save();return true}
   return false;
 }
-function done(b,dirty){b.insertAdjacentHTML('beforeend','<button id="fbdone" class="btn" style="margin-top:14px;width:100%">Done</button>');
-  b.querySelector('#fbdone').onclick=()=>dirty.v?location.reload():CA.closeSheet()}
-
-async function teacherPanel(dirty){
-  dirty=dirty||{v:false};
+const pend=a=>a.sort((x,y)=>(x.status==='pending'?0:1)-(y.status==='pending'?0:1));
+async function teacherPanel(dirty,tab){
+  dirty=dirty||{v:false,tab:'requests'};if(tab)dirty.tab=tab;
   const F=FBT.f,db=FBT.db,uid=FBT.uid(),me=CA.current('teacher').user;
-  if(!CA.sheetBody())CA.sheet({title:'My classes & requests'});
-  const b=CA.sheetBody();b.innerHTML='<p>Loading…</p>';
+  if(!CA.pageBody()){CA.page({title:'Classes & requests',sub:'Approve students and manage subjects',body:''});CA.pageClose(()=>dirty.v&&location.reload())}
+  const b=CA.pageBody();b.innerHTML='<p class="muted" style="padding:20px;text-align:center">Loading…</p>';
   const q=c=>F.getDocs(F.query(F.collection(db,c),F.where('teacherUid','==',uid)));
   const [cs,es,rs]=await Promise.all([q('classes'),q('enrollments'),q('corrections')]);
-  const crs=rs.docs.map(x=>({id:x.id,...x.data()})).sort((a,c)=>(a.status==='pending'?0:1)-(c.status==='pending'?0:1));
-  const cls=cs.docs.map(x=>({id:x.id,...x.data()}));
-  const en=es.docs.map(x=>({id:x.id,...x.data()})).sort((a,c)=>(a.status==='pending'?0:1)-(c.status==='pending'?0:1));
-  const D=['','Mon','Tue','Wed','Thu','Fri','Sat'];
-  b.innerHTML='<h4>Correction requests</h4>'+(crs.length?crs.map(r=>'<div class="card" style="margin:8px 0"><b>'+esc(r.name)+'</b> · <small>'+esc(r.roll)+' · '+esc(r.subject)+' · '+esc(r.date)+'</small><p style="margin:6px 0;color:var(--ink-2)">“'+esc(r.reason)+'”</p>'+(r.status==='pending'?'<button '+btn+' data-cr="approved" data-id="'+r.id+'" data-sid="'+r.sessionId+'" data-roll="'+esc(r.roll)+'">Mark present</button> <button '+btn+' data-cr="rejected" data-id="'+r.id+'">Reject</button>':chip(r.status))+'</div>').join(''):'<p>No correction requests.</p>')+'<h4 style="margin-top:18px">Student requests</h4>'+(en.length?en.map(e=>'<div class="card" style="margin:8px 0;display:flex;gap:8px;align-items:center;justify-content:space-between"><div><b>'+esc(e.name)+'</b><br><small>'+esc(e.roll)+' · '+esc(e.subject)+'</small></div><div style="display:flex;gap:6px;align-items:center">'+
-    (e.status==='pending'?'<button '+btn+' data-a="approved" data-id="'+e.id+'">Approve</button><button '+btn+' data-a="rejected" data-id="'+e.id+'">Reject</button>':chip(e.status)+(e.status==='approved'?'<button '+btn+' data-a="rejected" data-id="'+e.id+'">Remove</button>':''))+'</div></div>').join(''):'<p>No requests yet.</p>')+
-    '<h4 style="margin-top:18px">My classes</h4>'+(cls.length?cls.map(c=>'<div class="card" style="margin:8px 0;display:flex;justify-content:space-between;align-items:center"><div><b>'+esc(c.subject)+'</b><br><small>'+esc(c.cohort)+' · '+(c.days||[]).map(x=>D[x]).join(', ')+' · '+esc(c.slot)+'</small></div><button '+btn+' data-del="'+c.id+'">Delete</button></div>').join(''):'<p>No classes yet.</p>')+
-    '<h4 style="margin-top:18px">Add class</h4><div style="display:grid;gap:8px"><input class="input" id="nc-s" placeholder="Subject e.g. Data Structures"><input class="input" id="nc-c" placeholder="Cohort code e.g. BCA3" style="text-transform:uppercase"><input class="input" id="nc-t" value="10:00 AM" placeholder="Time e.g. 10:00 AM"><div id="nc-d" style="display:flex;flex-wrap:wrap;gap:10px">'+[1,2,3,4,5,6].map(i=>'<label><input type="checkbox" value="'+i+'"> '+D[i]+'</label>').join('')+'</div><button class="btn" id="nc-add">Add class</button></div>';
-  b.onclick=async e=>{
-    const a=e.target.closest('[data-a]'),x=e.target.closest('[data-del]'),cr=e.target.closest('[data-cr]');
+  if(!CA.pageBody())return;
+  const crs=pend(rs.docs.map(x=>({id:x.id,...x.data()}))),en=pend(es.docs.map(x=>({id:x.id,...x.data()}))),cls=cs.docs.map(x=>({id:x.id,...x.data()}));
+  const D=['','Mon','Tue','Wed','Thu','Fri','Sat'],pc=crs.filter(r=>r.status==='pending').length+en.filter(e=>e.status==='pending').length;
+  FBM.n=pc;document.querySelectorAll('[data-badge]').forEach(x=>{x.textContent=pc;x.hidden=!pc});
+  const tabs=[['requests','Requests'+(pc?' ('+pc+')':'')],['classes','Classes'],['new','New class']];
+  let h='<div class="seg" role="tablist">'+tabs.map(t=>'<button role="tab" aria-selected="'+(dirty.tab===t[0])+'" class="'+(dirty.tab===t[0]?'on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join('')+'</div>';
+  if(dirty.tab==='requests'){
+    h+='<div class="sect">Subject requests from students</div><div class="stack">'+(en.length?en.map(e=>'<div class="item"><span class="avatar">'+esc(CA.initials(e.name))+'</span><span class="grow"><div class="t ellipsis">'+esc(e.name)+'</div><div class="s">'+esc(e.roll)+' · '+esc(e.subject)+'</div></span>'+(e.status==='pending'?'<button class="btn sm" data-a="approved" data-id="'+e.id+'">Approve</button><button class="'+B+'" data-a="rejected" data-id="'+e.id+'">Reject</button>':chip(e.status)+(e.status==='approved'?'<button class="'+B+'" data-a="rejected" data-id="'+e.id+'">Remove</button>':''))+'</div>').join(''):empty('users','No requests yet','Students in your cohorts will appear here.'))+'</div>';
+    h+='<div class="sect">Attendance correction requests</div><div class="stack">'+(crs.length?crs.map(r=>'<div class="card flat"><div class="row"><span class="grow"><div class="t"><b>'+esc(r.name)+'</b> · '+esc(r.roll)+'</div><div class="small muted">'+esc(r.subject)+' · '+esc(r.date)+'</div></span>'+(r.status==='pending'?'':chip(r.status))+'</div><p class="small" style="margin:8px 0 0;color:var(--ink-2)">“'+esc(r.reason)+'”</p>'+(r.status==='pending'?'<div class="row" style="margin-top:10px"><button class="btn sm" data-cr="approved" data-id="'+r.id+'" data-sid="'+r.sessionId+'" data-roll="'+esc(r.roll)+'">Mark present</button><button class="'+B+'" data-cr="rejected" data-id="'+r.id+'">Reject</button></div>':'')+'</div>').join(''):empty('checkc','No correction requests','Nothing is waiting for your review.'))+'</div>';
+  }else if(dirty.tab==='classes'){
+    h+='<div class="sect">Your classes</div><div class="stack">'+(cls.length?cls.map(c=>'<div class="item"><span class="bubble">'+CA.icon('book')+'</span><span class="grow"><div class="t ellipsis">'+esc(c.subject)+'</div><div class="s">'+esc(c.cohort)+' · '+(c.days||[]).map(x=>D[x]).join(', ')+' · '+esc(c.slot)+'</div></span><button class="btn sm danger" data-del="'+c.id+'">Delete</button></div>').join(''):empty('book','No classes yet','Use the New class tab to add your first one.'))+'</div>';
+  }else{
+    h+='<div class="stack" style="margin-top:14px"><label class="field"><span>Subject</span><input class="input" id="nc-s" placeholder="e.g. Data Structures"></label><label class="field"><span>Cohort code</span><input class="input" id="nc-c" placeholder="e.g. BCA3" style="text-transform:uppercase"></label><label class="field"><span>Class time</span><input class="input" id="nc-t" value="10:00 AM" placeholder="e.g. 10:00 AM"></label><div class="field"><span>Days</span><div id="nc-d" class="flexwrap" style="gap:8px">'+[1,2,3,4,5,6].map(i=>'<label class="daychip"><input type="checkbox" value="'+i+'"><span>'+D[i]+'</span></label>').join('')+'</div></div></div>';
+  }
+  CA.pageFoot(dirty.tab==='new'?'<button class="btn" id="nc-add">Add class</button>':'');
+  b.innerHTML=h;
+  const act=async e=>{
+    const a=e.target.closest('[data-a]'),x=e.target.closest('[data-del]'),cr=e.target.closest('[data-cr]'),tb=e.target.closest('[data-tab]');
     try{
+      if(tb)return teacherPanel(dirty,tb.dataset.tab);
       if(cr){
         await F.updateDoc(F.doc(db,'corrections',cr.dataset.id),{status:cr.dataset.cr});
         if(cr.dataset.cr==='approved'){const ss=CA.db().sessions.find(x=>x.id===cr.dataset.sid);if(ss){ss.records[cr.dataset.roll]='P';CA.save()}}
       }else if(a){await F.updateDoc(F.doc(db,'enrollments',a.dataset.id),{status:a.dataset.a})}
       else if(x){if(!confirm('Delete this class?'))return;await F.deleteDoc(F.doc(db,'classes',x.dataset.del))}
-      else if(e.target.id==='nc-add'){
-        const s=b.querySelector('#nc-s').value.trim(),c=b.querySelector('#nc-c').value.trim().toUpperCase(),t=b.querySelector('#nc-t').value.trim();
-        const days=[...b.querySelectorAll('#nc-d input:checked')].map(i=>+i.value);
-        if(!s||!c||!t||!days.length)return CA.toast('Fill subject, cohort, time and days');
+      else if(e.target.closest('#nc-add')){
+        const v=id=>b.querySelector(id).value.trim(),s=v('#nc-s'),c=v('#nc-c').toUpperCase(),t=v('#nc-t'),days=[...b.querySelectorAll('#nc-d input:checked')].map(i=>+i.value);
+        if(!s||!c||!t||!days.length)return CA.toast('Fill subject, cohort, time and days','bad');
         await F.addDoc(F.collection(db,'classes'),{subject:s,cohort:c,slot:t,days,teacherUid:uid,teacherEmp:me.id,teacherName:me.name,createdAt:F.serverTimestamp()});
+        dirty.tab='classes';
       }else return;
       dirty.v=true;await sync('teacher');teacherPanel(dirty);
-    }catch(err){CA.toast('Failed: '+(err.code||err.message))}
+    }catch(err){CA.toast('Failed: '+(err.code||err.message),'bad')}
   };
-  done(b,dirty);
+  b.onclick=act;const ft=document.querySelector('.pagefoot');if(ft)ft.onclick=act;
 }
 async function studentPanel(dirty){
   dirty=dirty||{v:false};
   const F=FBT.f,db=FBT.db,uid=FBT.uid(),me=CA.current('student').user;
-  if(!CA.sheetBody())CA.sheet({title:'My subjects'});
-  const b=CA.sheetBody();b.innerHTML='<p>Loading…</p>';
-  const [cs,es]=await Promise.all([
-    F.getDocs(F.query(F.collection(db,'classes'),F.where('cohort','==',me.cohort))),
-    F.getDocs(F.query(F.collection(db,'enrollments'),F.where('studentUid','==',uid)))]);
+  if(!CA.pageBody()){CA.page({title:'Enroll in subjects',sub:'Cohort '+me.cohort,body:''});CA.pageClose(()=>dirty.v&&location.reload())}
+  const b=CA.pageBody();b.innerHTML='<p class="muted" style="padding:20px;text-align:center">Loading…</p>';
+  const [cs,es]=await Promise.all([F.getDocs(F.query(F.collection(db,'classes'),F.where('cohort','==',me.cohort))),F.getDocs(F.query(F.collection(db,'enrollments'),F.where('studentUid','==',uid)))]);
+  if(!CA.pageBody())return;
   const st={};es.docs.forEach(x=>st[x.data().classId]=x.data().status);
   const cls=cs.docs.map(x=>({id:x.id,...x.data()}));
-  b.innerHTML='<p style="color:var(--ink-2)">Cohort: <b>'+esc(me.cohort)+'</b>. Request each subject; its teacher approves.</p>'+(cls.length?cls.map(c=>'<div class="card" style="margin:8px 0;display:flex;justify-content:space-between;align-items:center"><div><b>'+esc(c.subject)+'</b><br><small>'+esc(c.teacherName)+'</small></div>'+(st[c.id]?chip(st[c.id]):'<button '+btn+' data-req="'+c.id+'">Request</button>')+'</div>').join(''):'<p>No classes for your cohort yet.</p>');
+  b.innerHTML='<div class="card flat"><div class="row"><span class="bubble">'+CA.icon('shield')+'</span><p class="small muted">Request each subject you study. Its teacher approves you, and attendance starts counting after that.</p></div></div><div class="sect">Subjects in '+esc(me.cohort)+'</div><div class="stack">'+(cls.length?cls.map(c=>'<div class="item"><span class="bubble">'+CA.icon('book')+'</span><span class="grow"><div class="t ellipsis">'+esc(c.subject)+'</div><div class="s">'+esc(c.teacherName)+' · '+esc(c.slot)+'</div></span>'+(st[c.id]?chip(st[c.id]):'<button class="btn sm" data-req="'+c.id+'">Request</button>')+'</div>').join(''):empty('book','No subjects yet','Your teachers haven’t added classes for this cohort.'))+'</div>';
   b.onclick=async e=>{
     const r=e.target.closest('[data-req]');if(!r)return;
-    const c=cls.find(x=>x.id===r.dataset.req);
+    const c=cls.find(x=>x.id===r.dataset.req);r.disabled=true;
     try{
       await F.setDoc(F.doc(db,'enrollments',uid+'_'+c.id),{studentUid:uid,classId:c.id,teacherUid:c.teacherUid,roll:me.id,name:me.name,subject:c.subject,cohort:c.cohort,status:'pending',createdAt:F.serverTimestamp()});
-      studentPanel(dirty);
-    }catch(err){CA.toast('Failed: '+(err.code||err.message))}
+      dirty.v=true;CA.toast('Request sent to '+c.teacherName);studentPanel(dirty);
+    }catch(err){r.disabled=false;CA.toast('Failed: '+(err.code||err.message),'bad')}
   };
-  done(b,dirty);
 }
 
 /* ================= attendance sessions <-> Firestore =================
@@ -175,24 +175,25 @@ async function studentSessions(){
 async function calendar(m){
   const F=FBT.f,db=FBT.db,uid=FBT.uid(),me=CA.current('student').user,D=CA.db();
   m=m||new Date();m=new Date(m.getFullYear(),m.getMonth(),1);
-  if(!CA.sheetBody())CA.sheet({title:'Attendance calendar'});
-  const b=CA.sheetBody(),ids=D.classes.filter(c=>c.fb).map(c=>c.id);
+  if(!CA.pageBody())CA.page({title:'Attendance calendar',sub:'Day-wise record of your classes',body:''});
+  const b=CA.pageBody(),ids=D.classes.filter(c=>c.fb).map(c=>c.id);
   const ss=D.sessions.filter(s=>s.status==='closed'&&ids.includes(s.classId)&&s.records[me.id]);
   const cs={};(await F.getDocs(F.query(F.collection(db,'corrections'),F.where('studentUid','==',uid)))).docs.forEach(x=>cs[x.id]=x.data());
+  if(!CA.pageBody())return;
   const y=m.getFullYear(),mo=m.getMonth(),n=new Date(y,mo+1,0).getDate(),off=m.getDay(),pad=v=>String(v).padStart(2,'0');
   let sel=null;
   const draw=()=>{
-    let h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><button '+btn+' data-mv="-1">‹</button><b>'+m.toLocaleString('en',{month:'long'})+' '+y+'</b><button '+btn+' data-mv="1">›</button></div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center">'+'SMTWTFS'.split('').map(x=>'<small>'+x+'</small>').join('');
+    let h='<div class="mbar"><button class="'+B+'" data-mv="-1" aria-label="Previous month">'+CA.icon('back',18)+'</button><b>'+m.toLocaleString('en',{month:'long'})+' '+y+'</b><button class="'+B+'" data-mv="1" aria-label="Next month">'+CA.icon('chev',18)+'</button></div><div class="cal">'+'SMTWTFS'.split('').map(x=>'<small>'+x+'</small>').join('');
     for(let i=0;i<off;i++)h+='<span></span>';
     for(let d=1;d<=n;d++){
-      const k=y+'-'+pad(mo+1)+'-'+pad(d),day=ss.filter(s=>s.date===k),p=day.filter(s=>s.records[me.id]==='P').length;
-      const c=!day.length?'':p===day.length?'ok':p?'warn':'bad';
-      h+='<button data-day="'+k+'" style="padding:9px 0;border-radius:10px;border:1px solid '+(k===sel?'var(--brand)':'var(--line)')+';background:'+(c?'var(--'+c+'-soft)':'var(--surface)')+';color:'+(c?'var(--'+c+')':'var(--ink-2)')+';font-weight:600">'+d+'</button>';
+      const k=y+'-'+pad(mo+1)+'-'+pad(d),day=ss.filter(s=>s.date===k),p=day.filter(s=>s.records[me.id]==='P').length,c=!day.length?'':p===day.length?'ok':p?'warn':'bad';
+      h+='<button class="'+c+(k===sel?' sel':'')+'" data-day="'+k+'">'+d+'</button>';
     }
-    h+='</div><p style="color:var(--ink-2);font-size:12px">Green: present · Amber: partly · Red: absent. Tap a day.</p>';
-    if(sel)h+='<h4>'+sel+'</h4>'+(ss.filter(s=>s.date===sel).map(s=>{
+    h+='</div><div class="flexwrap" style="margin-top:14px">'+CA.chip('ok','Present')+CA.chip('warn','Partly')+CA.chip('bad','Absent')+'</div>';
+    h+='<div class="sect">'+(sel?CA.fmtDate(sel):'Select a day to see its classes')+'</div>';
+    if(sel)h+='<div class="stack">'+(ss.filter(s=>s.date===sel).map(s=>{
       const c=D.classes.find(x=>x.id===s.classId),A=s.records[me.id]==='A',cr=cs[s.id+'_'+uid];
-      return '<div class="card" style="margin:6px 0;display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b>'+esc(c.subject)+'</b><br><small>'+CA.fmtTime(s.startedAt)+'</small></div>'+(A?(cr?chip(cr.status).replace(cr.status,'correction '+cr.status):'<button '+btn+' data-cor="'+s.id+'">Request correction</button>'):CA.chip('ok','Present'))+'</div>'}).join('')||'<p>No class that day.</p>');
+      return '<div class="item"><span class="grow"><div class="t">'+esc(c.subject)+'</div><div class="s">'+CA.fmtTime(s.startedAt)+'</div></span>'+(A?(cr?CA.chip(ST[cr.status]||'neutral','Correction '+cr.status):'<button class="btn sm soft" data-cor="'+s.id+'">Request correction</button>'):CA.chip('ok','Present','check'))+'</div>'}).join('')||empty('cal','No class that day','Nothing was recorded on this date.'))+'</div>';
     b.innerHTML=h;
   };
   b.onclick=async e=>{
@@ -204,8 +205,8 @@ async function calendar(m){
       if(!reason||!reason.trim())return;
       try{
         await F.setDoc(F.doc(db,'corrections',s.id+'_'+uid),{sessionId:s.id,classId:s.classId,teacherUid:c.tuid,studentUid:uid,roll:me.id,name:me.name,subject:c.subject,date:s.date,reason:reason.trim().slice(0,200),status:'pending',createdAt:F.serverTimestamp()});
-        cs[s.id+'_'+uid]={status:'pending'};draw();
-      }catch(err){CA.toast('Failed: '+(err.code||err.message))}
+        cs[s.id+'_'+uid]={status:'pending'};CA.toast('Correction requested');draw();
+      }catch(err){CA.toast('Failed: '+(err.code||err.message),'bad')}
     }
   };
   draw();
@@ -223,7 +224,15 @@ function lowAlert(){
   document.body.appendChild(el);
   if(window.Notification&&Notification.permission==='granted'&&localStorage.getItem('fbNotif')!==day){localStorage.setItem('fbNotif',day);new Notification('Low attendance',{body:msg})}
 }
-window.FBM={
-  async teacher(){fab('Classes',()=>teacherPanel());await FBT.ready;try{if(await sync('teacher'))return location.reload();await teacherSessions()}catch(e){console.warn(e)}},
-  async student(){fab('Subjects',()=>studentPanel());fab('Calendar',()=>calendar(),140);await FBT.ready;try{if(await sync('student'))return location.reload();await studentSessions();lowAlert()}catch(e){console.warn(e)}}
+function watchBadge(){
+  const F=FBT.f,db=FBT.db,uid=FBT.uid(),n=[0,0];
+  ['enrollments','corrections'].forEach((c,k)=>F.onSnapshot(F.query(F.collection(db,c),F.where('teacherUid','==',uid)),s=>{
+    n[k]=s.docs.filter(d=>d.data().status==='pending').length;FBM.n=n[0]+n[1];
+    document.querySelectorAll('[data-badge]').forEach(x=>{x.textContent=FBM.n;x.hidden=!FBM.n});
+  },()=>{}));
+}
+window.FBM={n:0,
+  openClasses:t=>teacherPanel(null,t),openEnroll:()=>studentPanel(),openCalendar:()=>calendar(),
+  async teacher(){await FBT.ready;try{watchBadge();if(await sync('teacher'))return location.reload();await teacherSessions()}catch(e){console.warn(e)}},
+  async student(){await FBT.ready;try{if(await sync('student'))return location.reload();await studentSessions();lowAlert()}catch(e){console.warn(e)}}
 };
