@@ -1,70 +1,183 @@
 <!DOCTYPE html>
 <html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><title>Admin · CampusAttend</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#A81D16">
+<title>Admin · CampusAttend</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#F6F3F2;--s:#fff;--ink:#1D1816;--ink2:#645B58;--line:#EAE3E1;--br:#C8221A}
-@media(prefers-color-scheme:dark){:root{--bg:#120E0E;--s:#1D1717;--ink:#F6EFED;--ink2:#BDB0AC;--line:#332828;--br:#CF3128}}
-*{box-sizing:border-box}body{margin:0;font:14px/1.4 system-ui,sans-serif;background:var(--bg);color:var(--ink)}
-.wrap{max-width:980px;margin:0 auto;padding:16px}h1{font-size:18px;margin:0}
-.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-button,select,input{font:inherit;color:inherit;border:1px solid var(--line);background:var(--s);border-radius:10px;padding:8px 10px}
-button{cursor:pointer;font-weight:600}.on,.pri{background:var(--br);color:#fff;border-color:var(--br)}
-.box{background:var(--s);border:1px solid var(--line);border-radius:14px;padding:10px;overflow-x:auto}
-table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
-th{color:var(--ink2);font-size:12px}.m{color:var(--ink2);padding:8px}
-#login{max-width:340px;margin:12vh auto;display:grid;gap:10px}#err{color:#B3261E}
-.add{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}[hidden]{display:none!important}
+:root{--brand:#D3261D;--btn:#C8221A;--bg:#F6F3F2;--s:#fff;--s2:#FAF6F5;--ink:#1D1816;--ink2:#645B58;--ink3:#857B78;--line:#EAE3E1;--ok:#14804F;--oks:#E2F4EB;--warn:#9A5800;--warns:#FFF1D6;--bad:#B3261E;--bads:#FCE9E7;--sh:0 1px 2px rgba(70,20,15,.06),0 8px 24px rgba(70,20,15,.08);color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--brand:#F0584E;--btn:#CF3128;--bg:#120E0E;--s:#1D1717;--s2:#251D1D;--ink:#F6EFED;--ink2:#BDB0AC;--ink3:#9A8D89;--line:#332828;--ok:#3DD598;--oks:#14302A;--warn:#F5B547;--warns:#352A12;--bad:#FF8379;--bads:#3A1E1B;--sh:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);color-scheme:dark}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font:15px/1.45 Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100dvh;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer;border:0;background:none}[hidden]{display:none!important}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--brand) 60%,transparent);outline-offset:2px}
+.top{background:linear-gradient(135deg,#BC2018,#85120D);color:#fff;padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;display:flex;align-items:center;gap:12px}
+.top h1{font-size:17px;font-weight:700;flex:1}.top p{font-size:12px;opacity:.88;font-weight:400}
+.top button{background:rgba(255,255,255,.16);color:#fff;border-radius:12px;padding:9px 14px;font-weight:700;font-size:13px}
+nav{position:sticky;top:0;z-index:10;background:var(--s);border-bottom:1px solid var(--line);display:flex;gap:4px;overflow-x:auto;padding:8px 12px;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:none;padding:9px 14px;border-radius:12px;font-weight:700;font-size:13.5px;color:var(--ink2);display:flex;align-items:center;gap:6px}
+nav button.on{background:color-mix(in srgb,var(--brand) 12%,var(--s));color:var(--brand)}
+.dot{min-width:18px;height:18px;border-radius:9px;background:var(--brand);color:#fff;font-size:11px;line-height:18px;text-align:center;padding:0 5px}
+main{max-width:960px;margin:0 auto;padding:16px 16px 60px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:6px}
+.stat{background:var(--s);border:1px solid var(--line);border-radius:16px;padding:14px;text-align:left;box-shadow:var(--sh)}
+.stat b{display:block;font-size:26px;font-weight:800;letter-spacing:-.02em}.stat span{font-size:12.5px;color:var(--ink2)}
+.card{background:var(--s);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.card .grow{flex:1;min-width:140px}.card b{display:block;font-size:14.5px}.card small{display:block;color:var(--ink2);font-size:12.5px;margin-top:1px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;background:color-mix(in srgb,var(--brand) 12%,var(--s));color:var(--brand);flex:none}
+.chip{display:inline-flex;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;background:var(--s2);color:var(--ink2);border:1px solid var(--line)}
+.chip.ok{background:var(--oks);color:var(--ok);border-color:transparent}.chip.warn{background:var(--warns);color:var(--warn);border-color:transparent}.chip.bad{background:var(--bads);color:var(--bad);border-color:transparent}
+.b{padding:8px 13px;border-radius:11px;font-weight:700;font-size:13px;background:var(--s2);border:1px solid var(--line)}
+.b.p{background:var(--btn);color:#fff;border-color:var(--btn)}.b.ok{background:var(--oks);color:var(--ok);border-color:transparent}.b.d{background:var(--bads);color:var(--bad);border-color:transparent}
+.b[disabled]{opacity:.5;pointer-events:none}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.in{min-height:44px;border-radius:12px;border:1.5px solid var(--line);background:var(--s);padding:0 12px;outline:none;width:100%}
+textarea.in{padding:10px 12px;min-height:90px;resize:vertical}
+.in:focus{border-color:var(--brand)}
+.tools .in{flex:1;min-width:160px;width:auto}
+.fchips{display:flex;gap:6px;flex-wrap:wrap}.fchips button{padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--s);font-weight:700;font-size:12.5px;color:var(--ink2)}
+.fchips button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.form{background:var(--s);border:1px solid var(--line);border-radius:18px;padding:14px;display:grid;gap:10px;margin-bottom:14px;box-shadow:var(--sh)}
+.form h2{font-size:15px}.form label>span{display:block;font-size:12.5px;font-weight:600;color:var(--ink2);margin:0 0 5px 2px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:520px){.two{grid-template-columns:1fr}}
+.dc{position:relative}.dc input{position:absolute;opacity:0;inset:0}.dc span{display:block;padding:8px 12px;border-radius:11px;border:1.5px solid var(--line);font-weight:700;font-size:13px;color:var(--ink2);background:var(--s);margin:0!important}
+.dc input:checked+span{background:var(--brand);border-color:var(--brand);color:#fff}
+.sect{margin:18px 2px 8px;font-size:13px;font-weight:700;color:var(--ink2)}
+.empty{text-align:center;padding:30px 16px;color:var(--ink2);background:var(--s);border:1px dashed var(--line);border-radius:16px}.empty b{display:block;color:var(--ink);margin-bottom:3px}
+.warnbox{background:var(--warns);color:var(--warn);border-radius:14px;padding:12px 14px;font-size:13.5px;font-weight:600;margin-bottom:12px}
+.note p{font-size:13px;color:var(--ink2);white-space:pre-wrap;width:100%}
+#login{max-width:360px;margin:12vh auto;padding:0 16px;display:grid;gap:12px}#login h1{font-size:22px}#err{color:var(--bad);font-size:13.5px;min-height:18px}
+.toasts{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 20px);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;z-index:50;padding:0 16px}
+.toast{background:#241816;color:#fff;border-radius:14px;padding:11px 16px;font-weight:600;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}.toast.bad{background:#7d1812}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head><body>
-<div class="wrap">
-<form id="login"><h1>Admin sign in</h1><input id="em" type="email" placeholder="Email" required><input id="pw" type="password" placeholder="Password" required><button class="pri">Sign in</button><div id="err"></div></form>
+<form id="login"><h1>Admin sign in</h1><p style="color:var(--ink2)">CampusAttend · CSJMU Kanpur</p><input class="in" id="em" type="email" placeholder="Email" autocomplete="username" required><input class="in" id="pw" type="password" placeholder="Password" autocomplete="current-password" required><button class="b p" style="min-height:46px">Sign in</button><div id="err" role="alert"></div></form>
 <div id="app" hidden>
- <div class="bar"><h1>CampusAttend · Admin</h1><button id="out">Sign out</button></div>
- <div class="tabs" id="tabs"></div>
- <div id="v-teachers" class="box"></div>
- <div id="v-students" class="box" hidden></div>
- <div id="v-classes" hidden><div class="box add"><input id="c-s" placeholder="Subject"><input id="c-c" placeholder="Cohort e.g. BCA3"><select id="c-t"></select><input id="c-sl" placeholder="Time" value="10:00 AM"><input id="c-d" placeholder="Days 1-6 e.g. 1,3,5" value="1,3,5"><button class="pri" id="c-add">Add class</button></div><div class="box" id="b-classes"></div></div>
- <div id="v-enrollments" class="box" hidden></div>
-</div></div>
+  <header class="top"><h1>Admin<p>CampusAttend · CSJMU Kanpur</p></h1><button id="out">Sign out</button></header>
+  <nav id="tabs" aria-label="Sections"></nav>
+  <main id="main"></main>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
 <script type="module" src="fb-teacher.js"></script>
 <script type="module">
 const F=FBT.f,db=FBT.db,$=id=>document.getElementById(id);
-const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let teachers=[],started=false;
-function live(col,box,cols,statuses,del){
-  box.dataset.col=col;
-  F.onSnapshot(F.collection(db,col),snap=>{
-    const rows=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1));
-    if(col==='teachers'){teachers=rows;fillT()}
-    box.innerHTML=rows.length?'<table><tr>'+cols.map(c=>'<th>'+c[0]+'</th>').join('')+(statuses?'<th>Status</th>':'')+(del?'<th></th>':'')+'</tr>'+rows.map(r=>'<tr>'+cols.map(c=>'<td>'+esc(typeof c[1]==='function'?c[1](r):r[c[1]])+'</td>').join('')+(statuses?'<td><select data-id="'+r.id+'">'+statuses.map(s=>'<option'+(s===r.status?' selected':'')+'>'+s+'</option>').join('')+'</select></td>':'')+(del?'<td><button data-del="'+r.id+'">Delete</button></td>':'')+'</tr>').join('')+'</table>':'<p class="m">Nothing here yet.</p>';
-  },e=>box.innerHTML='<p class="m">'+esc(e.code)+'</p>');
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const D={teachers:[],students:[],classes:[],enrollments:[],cohorts:[],announcements:[]};
+const S={tab:'overview',q:'',f:'all'},DAYS=['','Mon','Tue','Wed','Thu','Fri','Sat'];
+let started=false,cur=null,errCode='';
+const ST={pending:'warn',approved:'ok',active:'ok',rejected:'bad',terminated:'bad'};
+const chip=s=>'<span class="chip '+(ST[s]||'')+'">'+esc(s)+'</span>';
+const ini=n=>String(n||'?').replace(/^(Dr|Prof)\.?\s+/i,'').split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+const cname=id=>(D.cohorts.find(c=>c.id===id)||{}).name||id;
+const card=(n,sub,st,acts,extra)=>'<div class="card note"><span class="av">'+esc(ini(n))+'</span><div class="grow"><b>'+esc(n)+'</b><small>'+esc(sub)+'</small></div>'+(st?chip(st):'')+(extra||'')+(acts?'<div class="acts">'+acts+'</div>':'')+'</div>';
+const B=(attrs,label,cls)=>'<button class="b '+(cls||'')+'" '+attrs+'>'+label+'</button>';
+const setB=(col,id,st,label,cls)=>B('data-set="'+col+'" data-id="'+id+'" data-st="'+st+'"',label,cls);
+const delB=(col,id)=>B('data-del="'+col+'" data-id="'+id+'"','Delete','d');
+const empty=(t,s)=>'<div class="empty"><b>'+t+'</b>'+s+'</div>';
+const toast=(m,bad)=>{const t=document.createElement('div');t.className='toast'+(bad?' bad':'');t.textContent=m;$('toasts').appendChild(t);setTimeout(()=>t.remove(),2800)};
+const fail=e=>toast('Failed: '+(e.code||e.message),1);
+const hit=(r,keys)=>!S.q||keys.some(k=>String(r[k]||'').toLowerCase().includes(S.q.toLowerCase()));
+const pf=r=>r.status==='pending'?0:1;
+const search=ph=>'<input class="in" id="q" type="search" placeholder="'+ph+'" value="'+esc(S.q)+'" aria-label="'+ph+'">';
+const fchips=(arr)=>'<div class="fchips">'+arr.map(a=>'<button data-f="'+a+'" class="'+(S.f===a?'on':'')+'">'+a[0].toUpperCase()+a.slice(1)+'</button>').join('')+'</div>';
+const cohortOpts=(all)=>(all?'<option value="all">All cohorts</option>':'<option value="">Select cohort</option>')+D.cohorts.map(c=>'<option value="'+esc(c.id)+'"'+(S.f===c.id?' selected':'')+'>'+esc(c.name||c.id)+'</option>').join('');
+const nStu=c=>D.students.filter(s=>s.cohort===c&&s.status==='active').length;
+const ms=a=>a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():0;
+
+const V={
+overview(){
+  const pt=D.teachers.filter(t=>t.status==='pending'),pe=D.enrollments.filter(e=>e.status==='pending');
+  let h='';
+  if(errCode)h+='<div class="warnbox">Could not read some data ('+esc(errCode)+'). Check your Firestore rules.</div>';
+  if(!D.cohorts.length)h+='<div class="warnbox">Add your cohorts first (Cohorts tab). Students pick their cohort from this list while signing up.</div>';
+  h+='<div class="stats">'+[['Teachers',D.teachers.filter(t=>t.status==='approved').length],['Pending teachers',pt.length],['Students',D.students.filter(s=>s.status==='active').length],['Classes',D.classes.length],['Pending requests',pe.length],['Cohorts',D.cohorts.length]].map(x=>'<div class="stat"><b>'+x[1]+'</b><span>'+x[0]+'</span></div>').join('')+'</div>';
+  h+='<div class="sect">Teachers waiting for approval</div>'+(pt.length?'<div class="grid">'+pt.slice(0,6).map(t=>card(t.name,t.empId+' · '+t.dept,'',setB('teachers',t.id,'approved','Approve','ok')+setB('teachers',t.id,'rejected','Reject','d'))).join('')+'</div>'+(pt.length>1?'<div style="margin-top:10px">'+B('data-do="approveAll"','Approve all '+pt.length,'p')+'</div>':''):empty('All clear','No teacher is waiting for approval.'));
+  return{tools:h,list:()=>''};
+},
+teachers(){
+  const pend=D.teachers.filter(t=>t.status==='pending').length;
+  return{tools:'<div class="tools">'+search('Search name, employee ID or department')+(pend?B('data-do="approveAll"','Approve all pending ('+pend+')','p'):'')+'</div><div class="tools">'+fchips(['all','pending','approved','rejected','terminated'])+'</div>',
+  list:()=>{const r=D.teachers.filter(t=>hit(t,['name','empId','dept'])&&(S.f==='all'||t.status===S.f)).sort((a,b)=>pf(a)-pf(b));
+    return r.length?'<div class="grid">'+r.map(t=>card(t.name,t.empId+' · '+t.dept+' · '+t.designation,t.status,
+      (t.status==='pending'?setB('teachers',t.id,'approved','Approve','ok')+setB('teachers',t.id,'rejected','Reject','d'):t.status==='approved'?setB('teachers',t.id,'terminated','Terminate','d'):setB('teachers',t.id,'approved','Restore','ok'))+delB('teachers',t.id))).join('')+'</div>':empty('No teachers found','Try a different search or filter.')}};
+},
+students(){
+  return{tools:'<div class="tools">'+search('Search name or roll number')+'<select class="in" id="fs" aria-label="Cohort">'+cohortOpts(true)+'</select></div>',
+  list:()=>{const r=D.students.filter(s=>hit(s,['name','roll'])&&(S.f==='all'||s.cohort===S.f)).sort((a,b)=>String(a.roll).localeCompare(String(b.roll),undefined,{numeric:true}));
+    return r.length?'<div class="grid">'+r.map(s=>card(s.name,s.roll+' · '+cname(s.cohort),s.status,(s.status==='active'?setB('students',s.id,'terminated','Disable login','d'):setB('students',s.id,'active','Enable login','ok'))+delB('students',s.id))).join('')+'</div>':empty('No students found','Students appear here after they sign up.')}};
+},
+classes(){
+  const ap=D.teachers.filter(t=>t.status==='approved');
+  return{tools:'<div class="form"><h2>Add a class</h2><div class="two"><label><span>Subject</span><input class="in" id="c-s" placeholder="e.g. Data Structures"></label><label><span>Cohort</span><select class="in" id="c-c">'+cohortOpts()+'</select></label><label><span>Teacher</span><select class="in" id="c-t"><option value="">Select teacher</option>'+ap.map(t=>'<option value="'+t.id+'">'+esc(t.name)+' ('+esc(t.empId)+')</option>').join('')+'</select></label><label><span>Time</span><input class="in" id="c-sl" value="10:00 AM"></label></div><div><div style="font-size:12.5px;font-weight:600;color:var(--ink2);margin:0 0 6px 2px">Days</div><div class="fchips" id="c-d">'+[1,2,3,4,5,6].map(i=>'<label class="dc"><input type="checkbox" value="'+i+'"><span>'+DAYS[i]+'</span></label>').join('')+'</div></div>'+B('data-do="addClass"','Add class','p')+'</div>',
+  list:()=>D.classes.length?'<div class="grid">'+D.classes.map(c=>card(c.subject,cname(c.cohort)+' · '+c.teacherName+' · '+c.slot+' · '+(c.days||[]).map(x=>DAYS[x]).join(', '),'',delB('classes',c.id))).join('')+'</div>':empty('No classes yet','Add the first class above.')};
+},
+enrollments(){
+  return{tools:'<div class="tools">'+search('Search student or subject')+'</div><div class="tools">'+fchips(['all','pending','approved','rejected'])+'</div>',
+  list:()=>{const r=D.enrollments.filter(e=>hit(e,['name','roll','subject'])&&(S.f==='all'||e.status===S.f)).sort((a,b)=>pf(a)-pf(b));
+    return r.length?'<div class="grid">'+r.map(e=>card(e.name,e.roll+' · '+e.subject+' · '+cname(e.cohort),e.status,(e.status!=='approved'?setB('enrollments',e.id,'approved','Approve','ok'):'')+(e.status!=='rejected'?setB('enrollments',e.id,'rejected','Reject','d'):'')+delB('enrollments',e.id))).join('')+'</div>':empty('No requests','Subject requests from students show up here.')}};
+},
+cohorts(){
+  return{tools:'<div class="form"><h2>Add a cohort</h2><div class="two"><label><span>Code</span><input class="in" id="co-c" placeholder="e.g. BCA3" autocapitalize="characters" maxlength="12"></label><label><span>Display name (optional)</span><input class="in" id="co-n" placeholder="e.g. BCA Semester 3"></label></div>'+B('data-do="addCohort"','Add cohort','p')+'</div>',
+  list:()=>D.cohorts.length?'<div class="grid">'+D.cohorts.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})).map(c=>card(c.name||c.id,c.id+' · '+nStu(c.id)+' students · '+D.classes.filter(x=>x.cohort===c.id).length+' classes','',delB('cohorts',c.id))).join('')+'</div>':empty('No cohorts yet','Students will choose from this list when they register.')};
+},
+notices(){
+  return{tools:'<div class="form"><h2>Post an announcement</h2><label><span>Send to</span><select class="in" id="n-c"><option value="ALL">Everyone</option>'+D.cohorts.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name||c.id)+'</option>').join('')+'</select></label><label><span>Title</span><input class="in" id="n-t" maxlength="80"></label><label><span>Message</span><textarea class="in" id="n-m" maxlength="500"></textarea></label>'+B('data-do="post"','Post announcement','p')+'</div>',
+  list:()=>{const r=D.announcements.slice().sort((a,b)=>ms(b)-ms(a));return r.length?'<div class="grid">'+r.map(a=>'<div class="card note"><div class="grow"><b>'+esc(a.title)+'</b><small>'+esc(a.teacherName||'Admin')+' · '+(a.cohort==='ALL'?'Everyone':esc(cname(a.cohort)))+'</small></div>'+delB('announcements',a.id)+'<p>'+esc(a.body)+'</p></div>').join('')+'</div>':empty('No announcements','Posted messages are listed here.')}};
+},
+promote(){
+  const opts=D.cohorts.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name||c.id)+' ('+nStu(c.id)+')</option>').join('');
+  return{tools:'<div class="form"><h2>Semester-end promotion</h2><p style="color:var(--ink2);font-size:13.5px">Move every active student of one cohort to the next. Old attendance records stay safe. Students then request their new subjects.</p><div class="two"><label><span>From cohort</span><select class="in" id="p-f"><option value="">Select</option>'+opts+'</select></label><label><span>Move to</span><select class="in" id="p-t"><option value="">Select</option>'+D.cohorts.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name||c.id)+'</option>').join('')+'<option value="__out">Passed out (disable login)</option></select></label></div><div id="p-info" style="font-size:13.5px;color:var(--ink2)"></div>'+B('data-do="promote"','Promote students','p')+'</div>',list:()=>''};
 }
-function fillT(){$('c-t').innerHTML=teachers.filter(t=>t.status==='approved').map(t=>'<option value="'+t.id+'">'+esc(t.name)+' ('+esc(t.empId)+')</option>').join('')}
+};
+const TABS=[['overview','Overview'],['teachers','Teachers'],['students','Students'],['classes','Classes'],['enrollments','Requests'],['cohorts','Cohorts'],['notices','Announcements'],['promote','Promotion']];
+function render(full){
+  const badge={teachers:D.teachers.filter(t=>t.status==='pending').length,enrollments:D.enrollments.filter(e=>e.status==='pending').length};
+  $('tabs').innerHTML=TABS.map(t=>'<button data-tab="'+t[0]+'" class="'+(S.tab===t[0]?'on':'')+'">'+t[1]+(badge[t[0]]?'<i class="dot">'+badge[t[0]]+'</i>':'')+'</button>').join('');
+  const a=document.activeElement,typing=a&&$('main').contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName);
+  cur=V[S.tab]();
+  if(typing&&!full){const l=$('list');if(l)l.innerHTML=cur.list();return}
+  $('main').innerHTML=cur.tools+'<div id="list">'+cur.list()+'</div>';
+}
 function start(){
   if(started)return;started=true;
-  live('teachers',$('v-teachers'),[['Name','name'],['Emp ID','empId'],['Department','dept'],['Designation','designation']],['pending','approved','rejected','terminated'],true);
-  live('students',$('v-students'),[['Name','name'],['Roll','roll'],['Cohort','cohort']],['active','terminated'],true);
-  live('classes',$('b-classes'),[['Subject','subject'],['Cohort','cohort'],['Teacher','teacherName'],['Time','slot'],['Days','days']],null,true);
-  live('enrollments',$('v-enrollments'),[['Student','name'],['Roll','roll'],['Subject','subject'],['Cohort','cohort']],['pending','approved','rejected'],true);
+  Object.keys(D).forEach(c=>F.onSnapshot(F.collection(db,c),s=>{D[c]=s.docs.map(d=>({id:d.id,...d.data()}));render()},e=>{errCode=e.code;render()}));
 }
-const names={teachers:'Teachers',students:'Students',classes:'Classes',enrollments:'Enrollments'};
-$('tabs').innerHTML=Object.keys(names).map((k,i)=>'<button data-t="'+k+'"'+(i?'':' class="on"')+'>'+names[k]+'</button>').join('');
-$('tabs').onclick=e=>{const k=e.target.dataset.t;if(!k)return;
-  Object.keys(names).forEach(x=>{$('v-'+x).hidden=x!==k});
-  [...$('tabs').children].forEach(b=>b.classList.toggle('on',b.dataset.t===k))};
-document.addEventListener('change',e=>{const s=e.target;if(!s.dataset.id)return;
-  F.updateDoc(F.doc(db,s.closest('[data-col]').dataset.col,s.dataset.id),{status:s.value}).catch(x=>alert(x.code))});
-document.addEventListener('click',e=>{const b=e.target.closest('[data-del]');if(!b||!confirm('Delete permanently?'))return;
-  F.deleteDoc(F.doc(db,b.closest('[data-col]').dataset.col,b.dataset.del)).catch(x=>alert(x.code))});
-$('c-add').onclick=()=>{
-  const t=teachers.find(x=>x.id===$('c-t').value),days=$('c-d').value.split(',').map(x=>+x.trim()).filter(x=>x>=1&&x<=6);
-  if(!$('c-s').value.trim()||!$('c-c').value.trim()||!t||!days.length)return alert('Fill subject, cohort, teacher and days');
-  F.addDoc(F.collection(db,'classes'),{subject:$('c-s').value.trim(),cohort:$('c-c').value.trim().toUpperCase(),slot:$('c-sl').value.trim(),days,teacherUid:t.id,teacherEmp:t.empId,teacherName:t.name,createdAt:F.serverTimestamp()}).then(()=>$('c-s').value='').catch(x=>alert(x.code));
+const upd=(col,id,data)=>F.updateDoc(F.doc(db,col,id),data).catch(fail);
+const val=id=>$(id).value.trim();
+const DO={
+  approveAll(){const p=D.teachers.filter(t=>t.status==='pending');if(!p.length||!confirm('Approve '+p.length+' teacher'+(p.length===1?'':'s')+'?'))return;
+    const b=F.writeBatch(db);p.forEach(t=>b.update(F.doc(db,'teachers',t.id),{status:'approved'}));b.commit().then(()=>toast(p.length+' approved')).catch(fail)},
+  addClass(){const t=D.teachers.find(x=>x.id===val('c-t')),days=[...document.querySelectorAll('#c-d input:checked')].map(i=>+i.value),s=val('c-s'),c=val('c-c');
+    if(!s||!c||!t||!days.length)return toast('Fill subject, cohort, teacher and days',1);
+    F.addDoc(F.collection(db,'classes'),{subject:s,cohort:c,slot:val('c-sl'),days,teacherUid:t.id,teacherEmp:t.empId,teacherName:t.name,createdAt:F.serverTimestamp()}).then(()=>{toast('Class added');$('c-s').value=''}).catch(fail)},
+  addCohort(){const c=val('co-c').toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(!c)return toast('Enter a cohort code',1);
+    F.setDoc(F.doc(db,'cohorts',c),{name:val('co-n')||c,createdAt:F.serverTimestamp()}).then(()=>{toast('Cohort added');$('co-c').value='';$('co-n').value=''}).catch(fail)},
+  post(){const t=val('n-t'),m=val('n-m');if(!t||!m)return toast('Add a title and a message',1);
+    F.addDoc(F.collection(db,'announcements'),{cohort:val('n-c'),title:t,body:m,teacherUid:'admin',teacherName:'Admin',createdAt:F.serverTimestamp()}).then(()=>{toast('Announcement posted');$('n-t').value='';$('n-m').value=''}).catch(fail)},
+  async promote(){const from=val('p-f'),to=val('p-t');if(!from||!to)return toast('Choose both cohorts',1);if(from===to)return toast('Pick two different cohorts',1);
+    const list=D.students.filter(s=>s.cohort===from&&s.status==='active');if(!list.length)return toast('No active students in that cohort',1);
+    if(!confirm('Move '+list.length+' student'+(list.length===1?'':'s')+' from '+cname(from)+' to '+(to==='__out'?'Passed out (login disabled)':cname(to))+'?'))return;
+    try{for(let i=0;i<list.length;i+=400){const b=F.writeBatch(db);list.slice(i,i+400).forEach(s=>b.update(F.doc(db,'students',s.id),to==='__out'?{status:'terminated'}:{cohort:to}));await b.commit()}toast(list.length+' students updated')}catch(e){fail(e)}}
 };
+document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t||t.closest('#login'))return;const d=t.dataset;
+  if(d.tab){S.tab=d.tab;S.q='';S.f='all';render(true)}
+  else if(d.f){S.f=d.f;render(true)}
+  else if(d.set)upd(d.set,d.id,{status:d.st});
+  else if(d.del){if(confirm('Delete permanently? This cannot be undone.'))F.deleteDoc(F.doc(db,d.del,d.id)).catch(fail)}
+  else if(d.do)DO[d.do]();
+});
+document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;$('list').innerHTML=cur.list()}});
+document.addEventListener('change',e=>{
+  if(e.target.id==='fs'){S.f=e.target.value;$('list').innerHTML=cur.list()}
+  if(e.target.id==='p-f'){const n=nStu(e.target.value);$('p-info').textContent=e.target.value?n+' active student'+(n===1?'':'s')+' will move.':''}
+});
 $('login').onsubmit=e=>{e.preventDefault();$('err').textContent='';
   if(!FBT.configured())return $('err').textContent='Add Firebase config in fb-teacher.js';
-  FBT.adminLogin($('em').value,$('pw').value).catch(()=>$('err').textContent='Sign in failed.')};
+  FBT.adminLogin($('em').value,$('pw').value).catch(()=>$('err').textContent='Sign in failed. Check email and password.')};
 $('out').onclick=()=>FBT.logout();
 FBT.admin(ok=>{$('login').hidden=ok;$('app').hidden=!ok;if(ok)start();else if(started)location.reload()});
 </script></body></html>

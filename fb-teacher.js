@@ -59,6 +59,7 @@ window.FBT={
       un=FS.onSnapshot(FS.doc(db,col,u.uid),s=>cb(!!s.exists()&&s.data().status===ok),()=>{});
     });
   },
+  async cohorts(){const s=await FS.getDocs(FS.collection(db,'cohorts'));return s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}))},
   logout:()=>signOut(auth)
 };
 

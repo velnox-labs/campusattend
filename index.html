@@ -309,7 +309,7 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
       <label class="field"><span id="regIdLabel">Roll number</span><div class="input-wrap"><span class="lead" data-i="id"></span><input class="input" name="emp" type="text" autocapitalize="characters" placeholder="e.g. T2001"></div></label>
       <label class="field" data-r="teacher" hidden><span>Department</span><div class="input-wrap"><span class="lead" data-i="book"></span><input class="input" name="dept" type="text" value="Department of Computer Science"></div></label>
       <label class="field" data-r="teacher" hidden><span>Designation</span><div class="input-wrap"><span class="lead" data-i="book"></span><input class="input" name="desg" type="text" placeholder="e.g. Assistant Professor"></div></label>
-      <label class="field" data-r="student"><span>Cohort (course + semester)</span><div class="input-wrap"><span class="lead" data-i="book"></span><input class="input" name="cohort" type="text" autocapitalize="characters" placeholder="e.g. BCA3 or MCA1"></div></label>
+      <label class="field" data-r="student"><span>Cohort (course + semester)</span><div class="input-wrap"><span class="lead" data-i="book"></span><select class="input" name="cohort"><option value="">Loading cohorts…</option></select></div></label>
       <label class="field"><span>Password</span><div class="input-wrap"><span class="lead" data-i="lock"></span><input class="input" name="p1" type="password" autocomplete="new-password" placeholder="Min 6 characters"></div></label>
       <label class="field"><span>Confirm password</span><div class="input-wrap"><span class="lead" data-i="lock"></span><input class="input" name="p2" type="password" autocomplete="new-password" placeholder="Repeat password"></div></label>
       <p class="err" id="rerr" role="alert" hidden></p>
@@ -584,6 +584,15 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     regLink.textContent=open?'Back to sign in':(role==='teacher'?'New teacher? Register here':'New student? Register here');
     rerr.hidden=true;rok.hidden=true;
   });
+  (function(){
+    var sel=reg.elements.cohort,tries=0;
+    function fill(l){sel.innerHTML=l.length?'<option value="">Select your cohort</option>'+l.map(function(c){return '<option value="'+CA.esc(c.id)+'">'+CA.esc(c.name||c.id)+'</option>'}).join(''):'<option value="">No cohorts yet. Ask your admin.</option>'}
+    function load(){
+      if(!window.FBT||!FBT.cohorts){if(++tries<30)return setTimeout(load,300);return fill([])}
+      FBT.cohorts().then(fill).catch(function(){sel.innerHTML='<option value="">Could not load cohorts. Refresh.</option>'});
+    }
+    load();
+  })();
   reg.addEventListener('submit',function(e){
     e.preventDefault();rerr.hidden=true;rok.hidden=true;
     var f=function(n){return reg.elements[n].value.trim()};

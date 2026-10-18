@@ -214,6 +214,13 @@ html.nopage,html.nopage body{overflow:hidden}
 .cal button.sel{border:2px solid var(--brand)}
 .daychip{position:relative}.daychip input{position:absolute;opacity:0;inset:0}.daychip span{display:block;padding:9px 13px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:13px;color:var(--ink-2)}
 .daychip input:checked+span{background:var(--brand);border-color:var(--brand);color:#fff}.daychip input:focus-visible+span{outline:3px solid color-mix(in srgb,var(--brand) 60%,transparent)}
+.qa{grid-auto-flow:row;grid-template-columns:repeat(auto-fit,minmax(84px,1fr))}
+.qrbox{background:#fff;padding:8px;border-radius:14px;display:none;margin:12px auto 0;width:max-content}
+.qrbox img,.qrbox canvas{display:block}
+textarea.input{min-height:96px;padding:12px 14px;resize:vertical;line-height:1.4}
+.vid{width:100%;border-radius:18px;background:#000;aspect-ratio:3/4;object-fit:cover}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.note b{font-size:14.5px}.note p{font-size:13px;color:var(--ink-2);margin-top:3px;white-space:pre-wrap}.note small{display:block;color:var(--ink-3);font-size:12px;margin-top:6px}
 .mbar{display:flex;justify-content:space-between;align-items:center;gap:8px}.mbar b{font-size:16px}
 .toasts{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 76px);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:80;pointer-events:none;padding:0 16px}
 .toast{background:#241816;color:#fff;border-radius:14px;padding:11px 16px;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;align-items:center;gap:8px;max-width:420px;animation:tin .25s ease}
@@ -477,6 +484,33 @@ function closePage(fromPop){
   cb&&cb();
 }
 addEventListener('popstate',()=>{if(backing){backing=false;return}if(pageEl){pushed=false;closePage(true)}});
+function loadScript(u,g){return new Promise((ok,no)=>{if(window[g])return ok();const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=()=>no(new Error('Could not load library. Check your internet.'));document.head.appendChild(s)})}
+async function pdf(o){
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','jspdf');
+  const d=new window.jspdf.jsPDF({unit:'pt',format:'a4'}),W=d.internal.pageSize.getWidth(),H=d.internal.pageSize.getHeight(),M=40;let y=M+6;
+  d.setFont('helvetica','bold');d.setFontSize(16);d.setTextColor(168,29,22);d.text(o.title,M,y);y+=20;
+  d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(90,90,90);(o.sub||[]).forEach(l=>{d.text(l,M,y);y+=14});y+=10;
+  (o.tables||[]).forEach(t=>{
+    if(y>H-90){d.addPage();y=M}
+    if(t.title){d.setFont('helvetica','bold');d.setFontSize(12);d.setTextColor(30,30,30);d.text(t.title,M,y);y+=16}
+    const cw=t.w.map(x=>x*(W-2*M)),row=(c,hd,z,low)=>{
+      if(y>H-M){d.addPage();y=M}
+      if(hd){d.setFillColor(168,29,22);d.rect(M,y-12,W-2*M,19,'F');d.setTextColor(255,255,255);d.setFont('helvetica','bold')}
+      else{if(z){d.setFillColor(246,243,242);d.rect(M,y-12,W-2*M,19,'F')}d.setTextColor(low?179:30,low?38:30,low?30:30);d.setFont('helvetica','normal')}
+      d.setFontSize(10);let x=M+5;c.forEach((v,i)=>{d.text(String(v),x,y+1,{maxWidth:cw[i]-8});x+=cw[i]});y+=19};
+    row(t.head,true);t.rows.forEach((r,i)=>row(r,false,i%2===0,t.low&&t.low(r)));y+=16});
+  const n=d.getNumberOfPages();for(let i=1;i<=n;i++){d.setPage(i);d.setFontSize(8);d.setTextColor(140,140,140);d.text('CampusAttend · CSJMU Kanpur · Page '+i+' of '+n,M,H-18)}
+  d.save(o.name||'report.pdf');
+}
+function openTimetable(cls){
+  const N=['','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],mins=s=>{const m=/(\d+):(\d+)\s*(AM|PM)/i.exec(s||'');return m?((+m[1]%12)+(/PM/i.test(m[3])?12:0))*60+ +m[2]:0};
+  const today=new Date().getDay()||1;let day=today>6?1:today;
+  page({title:'Timetable',sub:cls.length+' class'+(cls.length===1?'':'es')+' each week',body:''});
+  const draw=()=>{const b=pageBody();if(!b)return;
+    const list=cls.filter(c=>(c.days||[]).indexOf(day)>-1).sort((a,c)=>mins(a.slot)-mins(c.slot));
+    b.innerHTML='<div class="seg" role="tablist">'+[1,2,3,4,5,6].map(i=>'<button role="tab" aria-selected="'+(i===day)+'" class="'+(i===day?'on':'')+'" data-tt="'+i+'">'+N[i].slice(0,3)+'</button>').join('')+'</div><div class="sect">'+N[day]+(day===new Date().getDay()?' · Today':'')+'</div><div class="stack">'+(list.map(c=>{const t=teacherOf(c.teacherId);return '<div class="item"><span class="bubble">'+icon('book')+'</span><span class="grow"><div class="t ellipsis">'+esc(c.subject)+'</div><div class="s">'+esc(cohortName(c.cohort))+(t&&t.name?' · '+esc(t.name):'')+'</div></span>'+chip('neutral',c.slot||'—','clock')+'</div>'}).join('')||'<div class="empty card flat"><div class="bubble">'+icon('cal')+'</div><b>No classes</b><span>Nothing is scheduled on this day.</span></div>')+'</div>'};
+  pageBody().onclick=e=>{const t=e.target.closest('[data-tt]');if(t){day=+t.dataset.tt;draw()}};draw();
+}
 const pageBody=()=>pageEl&&pageEl.querySelector('.pagebody');
 const pageFoot=h=>{const f=pageEl&&pageEl.querySelector('.pagefoot');if(f){f.innerHTML=h||'';f.hidden=!h}};
 const pageClose=fn=>{pageCb=fn};
@@ -501,7 +535,7 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
   getClass,cohortName,teacherOf,roster,classesOfTeacher,classesOfStudent,getSession,openSessionFor,sessionsOf,
   tally,overall,classStats,level,levelLabel,advice,liveCode,codeAt,sweep,startLive,extend,closeSession,setRecord,saveManual,
   submitCode,openForStudent,csv,download,
-  icon,ring,chip,pctText,toast,page,closePage,pageBody,pageFoot,pageClose,dialog,closeDialog,sheet:page,closeSheet:closePage,sheetBody:pageBody,setTheme,theme,brand};
+  icon,ring,chip,pctText,toast,page,closePage,pageBody,pageFoot,pageClose,dialog,closeDialog,sheet:page,closeSheet:closePage,sheetBody:pageBody,loadScript,pdf,openTimetable,setTheme,theme,brand};
 })();
 
 </script>
@@ -561,7 +595,7 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
       return '<button class="item" data-act="resume" data-id="'+s.id+'" style="margin-top:14px;border-color:var(--brand)"><span class="bubble">'+ic('radio')+'</span><span class="grow"><div class="t">Live now · '+esc(c.subject)+'</div><div class="s">'+m+' of '+tot+' marked · closes in <span class="num" data-left="'+s.id+'">'+CA.mmss(s.expiresAt-now)+'</span></div></span>'+ic('chev',18)+'</button>';
     }).join('');
     h+='<div class="hero" style="margin-top:14px"><div class="small">Average attendance</div><div class="big num">'+avg+'%</div><div class="hbar"><i style="width:'+avg+'%"></i></div><div class="kv"><div><b>'+n30+'</b><span>Sessions in 30 days</span></div><div><b>'+cls.length+'</b><span>Classes</span></div><div><b>'+Object.keys(low).length+'</b><span>Below '+CA.MIN_PCT+'%</span></div></div></div>';
-    if(T.fb&&window.FBM)h+='<div class="qa"><button data-act="fbclasses">'+ic('book',22)+'Classes</button><button data-act="fbreq">'+ic('users',22)+'Requests'+(window.FBM&&FBM.n?'<i class="badge" data-badge>'+FBM.n+'</i>':'<i class="badge" data-badge hidden></i>')+'</button><button data-act="nav" data-v="reports">'+ic('chart',22)+'Reports</button></div>';
+    h+='<div class="qa">'+(T.fb&&window.FBM?'<button data-act="fbclasses">'+ic('book',22)+'Classes</button><button data-act="fbreq">'+ic('users',22)+'Requests'+(FBM.n?'<i class="badge" data-badge>'+FBM.n+'</i>':'<i class="badge" data-badge hidden></i>')+'</button><button data-act="fbann">'+ic('radio',22)+'Announce</button>':'')+'<button data-act="timetable">'+ic('cal',22)+'Timetable</button></div>';
     h+='<div class="section-title"><h2>My classes</h2></div><div class="stack">';
     h+=cls.map(function(c){
       var st=CA.classStats(c.id),lv=CA.level(st.pct);
@@ -600,10 +634,15 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     var s=CA.getSession(S.sid);
     if(!s||s.status!=='open'){S.view='attend';return vAttend()}
     var c=CA.getClass(s.classId),total=CA.roster(s.classId).length;
-    var h='<div class="codecard"><span class="pulse">Live session</span><div class="cls">'+esc(c.subject)+' · '+esc(CA.cohortName(c.cohort))+'</div><div class="code num" id="code">--- ---</div><div class="hint">Show this code to your class. It refreshes every 30 seconds.</div><div class="cbar"><i id="cb" style="width:100%"></i></div></div>';
+    var h='<div class="codecard"><span class="pulse">Live session</span><div class="cls">'+esc(c.subject)+' · '+esc(CA.cohortName(c.cohort))+'</div><div class="code num" id="code">--- ---</div><div class="qrbox" id="qr"></div><div class="hint">Show this code or QR to your class. It refreshes every 30 seconds.</div><div class="cbar"><i id="cb" style="width:100%"></i></div></div>';
     h+='<div class="card" style="margin-top:12px"><div class="row"><div class="grow"><div class="small muted">Marked present</div><div class="num" style="font-size:28px;font-weight:800;line-height:1.1"><span id="mk">0</span> <span class="muted" style="font-size:15px;font-weight:600">/ '+total+'</span></div></div><div style="text-align:right"><div class="small muted">Closes in</div><div class="num" style="font-size:22px;font-weight:800" id="left">--:--</div></div></div><div class="bar brand" style="margin-top:12px"><i id="mkbar" style="width:0%"></i></div><div style="margin-top:12px"><button class="btn sm ghost" data-act="extend">'+ic('clock',16)+' Add 5 minutes</button></div></div>';
     h+='<div class="section-title"><h2>Students</h2><span class="small muted">Tap to mark by hand</span></div><div class="stack" id="roster"></div>';
-    return{html:h,cta:'<button class="btn" data-act="end">'+ic('checkc',20)+' End session and save</button>',after:function(){S.sig='';fillLive(true)}};
+    return{html:h,cta:'<button class="btn" data-act="end">'+ic('checkc',20)+' End session and save</button>',after:function(){S.sig='';S.qrc='';fillLive(true)}};
+  }
+  function makeQR(code){
+    CA.loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js','QRCode').then(function(){
+      var el=$('qr');if(!el||S.qrc!==code)return;el.innerHTML='';new QRCode(el,{text:code,width:132,height:132,correctLevel:QRCode.CorrectLevel.M});el.style.display='block';
+    }).catch(function(){});
   }
   function rosterHTML(s){
     return CA.roster(s.classId).map(function(st){
@@ -615,6 +654,7 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     var s=CA.getSession(S.sid);if(!s||!$('code'))return;
     var total=CA.roster(s.classId).length,lc=CA.liveCode(s);
     $('code').textContent=lc.code.slice(0,3)+' '+lc.code.slice(3);
+    if(S.qrc!==lc.code){S.qrc=lc.code;makeQR(lc.code)}
     $('cb').style.width=(lc.left/lc.total*100)+'%';
     var m=0;for(var k in s.records)if(s.records[k]==='P')m++;
     $('mk').textContent=m;$('mkbar').style.width=(total?m/total*100:0)+'%';
@@ -660,7 +700,7 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
     var h='<div class="hello"><h1>Reports</h1><p>Attendance by class, student and session.</p></div>';
     h+='<label class="field" style="margin-top:14px"><span>Class</span><select class="input" id="repClass" aria-label="Class">'+cls.map(function(x){return '<option value="'+x.id+'"'+(x.id===R.classId?' selected':'')+'>'+esc(x.subject)+' — '+esc(CA.cohortName(x.cohort))+'</option>'}).join('')+'</select></label>';
     h+='<div class="stats"><div class="stat"><b>'+st.sessions+'</b><span>Sessions held</span></div><div class="stat"><b>'+(st.sessions?Math.round(st.pct)+'%':'—')+'</b><span>Class average</span></div><div class="stat"><b>'+st.low+'</b><span>Below '+CA.MIN_PCT+'%</span></div></div>';
-    h+='<button class="btn ghost" data-act="export" style="margin-top:12px">'+ic('download',18)+' Export CSV</button>';
+    h+='<div class="row" style="margin-top:12px"><button class="btn ghost" data-act="export">'+ic('download',18)+' CSV</button><button class="btn ghost" data-act="pdf">'+ic('download',18)+' PDF report</button></div>';
     h+='<div class="seg" style="margin-top:16px" role="tablist"><button class="'+(R.tab==='students'?'on':'')+'" role="tab" aria-selected="'+(R.tab==='students')+'" data-act="rtab" data-v="students">'+ic('users',18)+' Students</button><button class="'+(R.tab==='sessions'?'on':'')+'" role="tab" aria-selected="'+(R.tab==='sessions')+'" data-act="rtab" data-v="sessions">'+ic('cal',18)+' Sessions</button></div>';
     if(R.tab==='students'){
       var rows=ros.map(function(s){return{s:s,x:CA.tally(s.id,c.id)}});
@@ -711,7 +751,17 @@ return{LOGO,WIN,SESSION_MS,MIN_PCT,ymd,parseYmd,fmtDate,fmtDateLong,fmtTime,mmss
   /* ---------------- actions ---------------- */
   var A={
     nav:function(el){go(el.dataset.v)},
-    fbclasses:function(){FBM.openClasses('classes')},fbreq:function(){FBM.openClasses('requests')},
+    fbclasses:function(){FBM.openClasses('classes')},fbann:function(){FBM.openAnnounce()},
+    timetable:function(){CA.openTimetable(myClasses())},
+    pdf:function(){
+      var c=CA.getClass(S.rep.classId),ros=CA.roster(c.id),ss=CA.sessionsOf(c.id),st=CA.classStats(c.id),mo={};
+      var rows=ros.map(function(s){var x=CA.tally(s.id,c.id);return[s.id,s.name,x.p,x.t,x.t?Math.round(x.pct)+'%':'—']});
+      ss.forEach(function(s){var k=s.date.slice(0,7),m=mo[k]=mo[k]||{n:0,p:0,t:0};m.n++;m.t+=ros.length;m.p+=ros.filter(function(q){return s.records[q.id]==='P'}).length});
+      var mrows=Object.keys(mo).sort().map(function(k){var m=mo[k];return[k,m.n,m.t?Math.round(m.p/m.t*100)+'%':'—']});
+      CA.pdf({name:'CampusAttend_'+c.subject.replace(/\W+/g,'_')+'_'+today()+'.pdf',title:c.subject+' · Attendance report',sub:[CA.cohortName(c.cohort)+' · '+ros.length+' students · '+st.sessions+' sessions','Teacher: '+T.name+' · Generated '+CA.fmtDateLong(new Date()),'Students below '+CA.MIN_PCT+'% are shown in red'],
+        tables:[{title:'Student-wise',head:['Roll','Name','Present','Total','%'],w:[.2,.4,.13,.13,.14],rows:rows,low:function(r){return parseInt(r[4])<CA.MIN_PCT}},{title:'Month-wise',head:['Month','Sessions','Average attendance'],w:[.4,.3,.3],rows:mrows}]
+      }).then(function(){CA.toast('PDF downloaded')}).catch(function(e){CA.toast(e.message,'bad')});
+    },fbreq:function(){FBM.openClasses('requests')},
     back:function(){go('attend')},
     pick:function(el){S.classId=el.dataset.id;render()},
     method:function(el){S.method=el.dataset.v;render()},

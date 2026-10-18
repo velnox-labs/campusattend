@@ -41,6 +41,7 @@ async function teacherPanel(dirty,tab){
   const crs=pend(rs.docs.map(x=>({id:x.id,...x.data()}))),en=pend(es.docs.map(x=>({id:x.id,...x.data()}))),cls=cs.docs.map(x=>({id:x.id,...x.data()}));
   const D=['','Mon','Tue','Wed','Thu','Fri','Sat'],pc=crs.filter(r=>r.status==='pending').length+en.filter(e=>e.status==='pending').length;
   FBM.n=pc;document.querySelectorAll('[data-badge]').forEach(x=>{x.textContent=pc;x.hidden=!pc});
+  const co=dirty.tab==='new'?await FBT.cohorts().catch(()=>[]):[];
   const tabs=[['requests','Requests'+(pc?' ('+pc+')':'')],['classes','Classes'],['new','New class']];
   let h='<div class="seg" role="tablist">'+tabs.map(t=>'<button role="tab" aria-selected="'+(dirty.tab===t[0])+'" class="'+(dirty.tab===t[0]?'on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join('')+'</div>';
   if(dirty.tab==='requests'){
@@ -49,7 +50,7 @@ async function teacherPanel(dirty,tab){
   }else if(dirty.tab==='classes'){
     h+='<div class="sect">Your classes</div><div class="stack">'+(cls.length?cls.map(c=>'<div class="item"><span class="bubble">'+CA.icon('book')+'</span><span class="grow"><div class="t ellipsis">'+esc(c.subject)+'</div><div class="s">'+esc(c.cohort)+' · '+(c.days||[]).map(x=>D[x]).join(', ')+' · '+esc(c.slot)+'</div></span><button class="btn sm danger" data-del="'+c.id+'">Delete</button></div>').join(''):empty('book','No classes yet','Use the New class tab to add your first one.'))+'</div>';
   }else{
-    h+='<div class="stack" style="margin-top:14px"><label class="field"><span>Subject</span><input class="input" id="nc-s" placeholder="e.g. Data Structures"></label><label class="field"><span>Cohort code</span><input class="input" id="nc-c" placeholder="e.g. BCA3" style="text-transform:uppercase"></label><label class="field"><span>Class time</span><input class="input" id="nc-t" value="10:00 AM" placeholder="e.g. 10:00 AM"></label><div class="field"><span>Days</span><div id="nc-d" class="flexwrap" style="gap:8px">'+[1,2,3,4,5,6].map(i=>'<label class="daychip"><input type="checkbox" value="'+i+'"><span>'+D[i]+'</span></label>').join('')+'</div></div></div>';
+    h+='<div class="stack" style="margin-top:14px"><label class="field"><span>Subject</span><input class="input" id="nc-s" placeholder="e.g. Data Structures"></label><label class="field"><span>Cohort</span>'+(co.length?'<select class="input" id="nc-c"><option value="">Select cohort</option>'+co.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.name||c.id)+'</option>').join('')+'</select>':'<input class="input" id="nc-c" placeholder="e.g. BCA3" style="text-transform:uppercase">')+'</label><label class="field"><span>Class time</span><input class="input" id="nc-t" value="10:00 AM" placeholder="e.g. 10:00 AM"></label><div class="field"><span>Days</span><div id="nc-d" class="flexwrap" style="gap:8px">'+[1,2,3,4,5,6].map(i=>'<label class="daychip"><input type="checkbox" value="'+i+'"><span>'+D[i]+'</span></label>').join('')+'</div></div></div>';
   }
   CA.pageFoot(dirty.tab==='new'?'<button class="btn" id="nc-add">Add class</button>':'');
   b.innerHTML=h;
@@ -224,6 +225,44 @@ function lowAlert(){
   document.body.appendChild(el);
   if(window.Notification&&Notification.permission==='granted'&&localStorage.getItem('fbNotif')!==day){localStorage.setItem('fbNotif',day);new Notification('Low attendance',{body:msg})}
 }
+const nDate=a=>CA.fmtDate(CA.ymd(new Date(a.t)));
+const noteCard=(a,del)=>'<div class="note"><div class="row"><b class="grow">'+esc(a.title)+'</b>'+(a.cohort?chip('neutral',a.cohort==='ALL'?'Everyone':a.cohort):'')+(del?'<button class="btn sm danger" data-del="'+a.id+'">Delete</button>':'')+'</div><p>'+esc(a.body)+'</p><small>'+esc(a.teacherName||'Admin')+' · '+nDate(a)+'</small></div>';
+const stamp=d=>{const v=d.data();return{id:d.id,...v,t:v.createdAt&&v.createdAt.toMillis?v.createdAt.toMillis():Date.now()}};
+async function announcePanel(){
+  const F=FBT.f,db=FBT.db,uid=FBT.uid(),me=CA.current('teacher').user;
+  const co=[...new Set(CA.db().classes.filter(c=>c.fb).map(c=>c.cohort))];
+  if(!CA.pageBody())CA.page({title:'Announcements',sub:'Send a message to a whole cohort',body:''});
+  const b=CA.pageBody();b.innerHTML='<p class="muted" style="padding:20px;text-align:center">Loading…</p>';
+  const rows=(await F.getDocs(F.query(F.collection(db,'announcements'),F.where('teacherUid','==',uid)))).docs.map(stamp).sort((x,y)=>y.t-x.t);
+  if(!CA.pageBody())return;
+  b.innerHTML=co.length?'<div class="stack"><label class="field"><span>Send to</span><select class="input" id="an-c">'+co.map(c=>'<option value="'+esc(c)+'">'+esc(CA.cohortName(c))+'</option>').join('')+'</select></label><label class="field"><span>Title</span><input class="input" id="an-t" maxlength="80" placeholder="e.g. Test on Monday"></label><label class="field"><span>Message</span><textarea class="input" id="an-m" maxlength="500" placeholder="Write the details students need to know"></textarea></label></div><div class="sect">Your recent announcements</div><div class="stack">'+(rows.length?rows.map(a=>noteCard(a,true)).join(''):empty('radio','Nothing posted yet','Students in the cohort see announcements on their home screen.'))+'</div>':empty('book','Add a class first','You can announce to cohorts that you teach.');
+  CA.pageFoot(co.length?'<button class="btn" id="an-post">Post announcement</button>':'');
+  const act=async e=>{
+    const d=e.target.closest('[data-del]'),p=e.target.closest('#an-post');
+    try{
+      if(d){if(!confirm('Delete this announcement?'))return;await F.deleteDoc(F.doc(db,'announcements',d.dataset.del))}
+      else if(p){const t=b.querySelector('#an-t').value.trim(),m=b.querySelector('#an-m').value.trim();
+        if(!t||!m)return CA.toast('Add a title and a message','bad');
+        await F.addDoc(F.collection(db,'announcements'),{cohort:b.querySelector('#an-c').value,title:t,body:m,teacherUid:uid,teacherName:me.name,createdAt:F.serverTimestamp()});CA.toast('Announcement posted')}
+      else return;
+      announcePanel();
+    }catch(err){CA.toast('Failed: '+(err.code||err.message),'bad')}
+  };
+  b.onclick=act;const ft=document.querySelector('.pagefoot');if(ft)ft.onclick=act;
+}
+function noticesPage(){
+  const a=FBM.ann||[];
+  CA.page({title:'Notices',sub:'From your teachers and admin',body:a.length?'<div class="stack">'+a.map(x=>noteCard(x,false)).join('')+'</div>':empty('radio','No notices','New announcements will show up here.')});
+}
+function watchNotices(){
+  const F=FBT.f,db=FBT.db,me=CA.current('student').user;
+  F.onSnapshot(F.query(F.collection(db,'announcements'),F.where('cohort','in',[me.cohort,'ALL'])),s=>{FBM.ann=s.docs.map(stamp).sort((x,y)=>y.t-x.t);dispatchEvent(new Event('fbann'))},()=>{});
+}
+async function cohortSync(){
+  try{const F=FBT.f,sd=await F.getDoc(F.doc(FBT.db,'students',FBT.uid())),m=sd.exists()&&sd.data(),me=CA.current('student').user,loc=CA.db().students.find(x=>x.id===me.id);
+    if(m&&loc&&loc.cohort!==m.cohort){loc.cohort=m.cohort;CA.save();return true}}catch(e){}
+  return false;
+}
 function watchBadge(){
   const F=FBT.f,db=FBT.db,uid=FBT.uid(),n=[0,0];
   ['enrollments','corrections'].forEach((c,k)=>F.onSnapshot(F.query(F.collection(db,c),F.where('teacherUid','==',uid)),s=>{
@@ -232,7 +271,7 @@ function watchBadge(){
   },()=>{}));
 }
 window.FBM={n:0,
-  openClasses:t=>teacherPanel(null,t),openEnroll:()=>studentPanel(),openCalendar:()=>calendar(),
+  openClasses:t=>teacherPanel(null,t),openAnnounce:()=>announcePanel(),openNotices:()=>noticesPage(),openEnroll:()=>studentPanel(),openCalendar:()=>calendar(),
   async teacher(){await FBT.ready;try{watchBadge();if(await sync('teacher'))return location.reload();await teacherSessions()}catch(e){console.warn(e)}},
-  async student(){await FBT.ready;try{if(await sync('student'))return location.reload();await studentSessions();lowAlert()}catch(e){console.warn(e)}}
+  async student(){await FBT.ready;try{if(await cohortSync())return location.reload();watchNotices();if(await sync('student'))return location.reload();await studentSessions();lowAlert()}catch(e){console.warn(e)}}
 };
